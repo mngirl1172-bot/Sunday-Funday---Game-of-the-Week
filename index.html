@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monday Night Football Pick a Square</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Arial, Helvetica, sans-serif;
+    background: radial-gradient(circle at top, #2a1640 0%, #0c0b11 48%, #050608 100%);
+    color: #fff;
+  }
+  header {
+    text-align: center;
+    padding: 28px 16px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: rgba(7,7,10,.94);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid #33243e;
+  }
+  h1 { margin: 0 0 7px; font-size: clamp(30px, 6vw, 48px); }
+  .subtitle { color: #c7bfce; margin: 0; }
+  .identity-bar {
+    margin:12px auto 0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    font-size:14px;
+  }
+  .identity-bar strong { font-size:15px; }
+  .identity-bar button {
+    border:1px solid #4a3655;
+    background:#17121d;
+    color:#fff;
+    border-radius:8px;
+    padding:7px 10px;
+    cursor:pointer;
+  }
+  .nav {
+    display:flex; justify-content:center; gap:8px; flex-wrap:wrap;
+    margin-top:18px;
+  }
+  .nav button {
+    border:1px solid #493652; background:#17121d; color:#ddd2e5;
+    border-radius:8px; padding:8px 11px; cursor:pointer; font-weight:700;
+  }
+  .nav button.active { background:#5b2b82; color:#fff; border-color:#7d45a8; }
+
+  main { width:min(980px, 100%); margin:0 auto; padding:25px 14px 50px; }
+  .board {
+    display:none;
+    background:linear-gradient(145deg, rgba(26,19,34,.97), rgba(12,12,17,.98));
+    border:1px solid #4a3b52;
+    border-radius:18px;
+    padding:22px;
+    margin-bottom:25px;
+    box-shadow:0 18px 55px rgba(0,0,0,.35);
+  }
+  .board.active { display:block; }
+  .game-number { color:#ad7bc9; font-weight:800; letter-spacing:.08em; text-transform:uppercase; font-size:13px; }
+  .game-title { margin:5px 0 4px; font-size:clamp(23px, 5vw, 34px); }
+  .score-sync-status {
+    margin:6px auto 10px;
+    font-size:13px;
+    opacity:.82;
+    text-align:center;
+  }
+  .score-summary {
+    margin:10px auto 14px;
+    max-width:680px;
+    padding:12px 16px;
+    border-radius:12px;
+    background:#17121d;
+    border:1px solid #4a3655;
+    text-align:center;
+    line-height:1.5;
+  }
+  .score-summary .score-line { font-size:16px; font-weight:700; }
+  .game-meta { color:#c9c2ce; margin-bottom:20px; font-size:16px; }
+  .game-meta strong { color:#fff; }
+
+  .squares {
+    display:grid;
+    grid-template-columns:repeat(5, 1fr);
+    gap:13px;
+    max-width:720px;
+    margin:0 auto 20px;
+  }
+  .card {
+    height:125px;
+    border:0;
+    background:transparent;
+    perspective:900px;
+    cursor:pointer;
+    padding:0;
+  }
+  .card:disabled { cursor:default; }
+  .card.locked { cursor:not-allowed; }
+  .card.locked .front { opacity:.55; }
+  .locked-label {
+    position:absolute;
+    top:8px;
+    left:8px;
+    right:8px;
+    font-size:11px;
+    font-weight:900;
+    letter-spacing:.05em;
+    text-align:center;
+  }
+  .card-inner {
+    position:relative; width:100%; height:100%;
+    transition:transform .65s cubic-bezier(.2,.75,.2,1);
+    transform-style:preserve-3d;
+  }
+  .card.flipped .card-inner { transform:rotateY(180deg); }
+  .face {
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    border-radius:14px; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+    box-shadow:0 10px 28px rgba(0,0,0,.35);
+  }
+  .front {
+    background:linear-gradient(145deg,#7041a0,#4a246d);
+    border:1px solid rgba(255,255,255,.18);
+    font-size:48px; font-weight:800;
+  }
+  .back {
+    background:#f7f7f9; color:#111;
+    transform:rotateY(180deg); font-size:58px; font-weight:900;
+    border:2px solid #fff;
+  }
+  .winner-half .back {
+    outline: 4px solid currentColor;
+  }
+  .winner-final .back {
+    box-shadow: inset 0 0 0 5px currentColor, 0 10px 28px rgba(0,0,0,.35);
+  }
+  .winner-both .back {
+    outline: 4px solid currentColor;
+    box-shadow: inset 0 0 0 5px currentColor, 0 10px 28px rgba(0,0,0,.35);
+  }
+  .winner-tag {
+    position:absolute;
+    top:9px;
+    left:9px;
+    right:9px;
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.04em;
+    text-align:center;
+  }
+  .chosen-label {
+    position:absolute;
+    top:8px;
+    left:8px;
+    right:8px;
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.06em;
+    text-align:center;
+  }
+  .picked-number {
+    font-size:40px;
+    font-weight:900;
+    line-height:1;
+  }
+  .owner-label {
+    position:absolute;
+    bottom:10px;
+    left:8px;
+    right:8px;
+    font-size:14px;
+    font-weight:800;
+    color:#4a246d;
+    text-align:center;
+  }
+  .status { text-align:center; color:#c8c1ce; min-height:23px; }
+  .results {
+    background:#111016; border:1px solid #352c3b; border-radius:12px;
+    padding:13px 15px; margin-top:15px;
+  }
+  .results h3 { margin:0 0 8px; font-size:16px; }
+  .winner-note {
+    margin:16px 0 0;
+    padding:14px 16px;
+    border-radius:12px;
+    background:#19131f;
+    border:1px solid #4a3655;
+    color:#ddd3e3;
+    line-height:1.45;
+    text-align:left;
+  }
+  .winner-note strong { color:#fff; }
+  .payout-box {
+    margin-top:14px;
+    padding:14px 16px;
+    border-radius:12px;
+    background:#111016;
+    border:1px solid #4a3655;
+    text-align:left;
+  }
+  .payout-box h3 { margin:0 0 10px; }
+  .score-grid {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px;
+    margin-bottom:10px;
+  }
+  .score-grid input {
+    width:100%;
+    padding:10px;
+    border-radius:8px;
+    border:1px solid #51475a;
+    background:#0d0c10;
+    color:#fff;
+  }
+  .winner-display {
+    margin-top:14px;
+    padding:14px 16px;
+    border-radius:12px;
+    background:#141018;
+    border:1px solid #5b4565;
+    text-align:left;
+  }
+  .winner-display h3 { margin:0 0 8px; }
+  .winner-display .big-winner { font-size:18px; font-weight:800; }
+  .payout-result {
+    margin-top:10px;
+    padding:10px;
+    border-radius:8px;
+    background:#19131f;
+    line-height:1.45;
+  }
+  .winner-example { color:#b991d0; font-size:14px; margin-top:6px; }
+  .result-row {
+    display:flex; justify-content:space-between; gap:12px;
+    padding:8px 0; border-bottom:1px solid #28232c;
+  }
+  .result-row:last-child { border-bottom:0; }
+  .empty { color:#77717e; font-size:14px; }
+
+  .bottom-controls { text-align:center; margin-top:24px; }
+  .control {
+    border:0; border-radius:9px; padding:12px 18px; background:#673596;
+    color:#fff; font-weight:800; cursor:pointer; margin:4px;
+  }
+  .control.secondary { background:#211b27; border:1px solid #403747; }
+
+  .modal {
+    position:fixed; inset:0; background:rgba(0,0,0,.78);
+    display:flex; align-items:center; justify-content:center;
+    padding:18px; z-index:20;
+  }
+  .modal.hidden { display:none; }
+  .dialog {
+    width:min(450px,100%); background:#19151e; border:1px solid #4a3a52;
+    border-radius:16px; padding:24px; box-shadow:0 25px 75px rgba(0,0,0,.6);
+  }
+  .dialog h2 { margin:0 0 7px; }
+  .dialog p { color:#c0b9c5; margin:0 0 17px; }
+  .close { float:right; border:0; background:none; color:#aaa2b0; font-size:26px; cursor:pointer; }
+  input {
+    width:100%; padding:14px; border-radius:9px; border:1px solid #51475a;
+    background:#0d0c10; color:#fff; font-size:16px; outline:none;
+  }
+  input:focus { border-color:#8b53b5; }
+  .submit { width:100%; margin:12px 0 0; }
+
+  .footer-note { text-align:center; color:#746c78; font-size:13px; margin-top:20px; }
+
+
+
+  .board {
+    --team-primary:#243447;
+    --team-secondary:#52677D;
+    --team-accent:#FFFFFF;
+    border-color:var(--team-secondary);
+    background:linear-gradient(145deg, color-mix(in srgb, var(--team-primary) 42%, #111 58%), #0c0c11);
+  }
+  .board .game-number { color:var(--team-accent); }
+  .board .card .front {
+    background:linear-gradient(145deg,var(--team-primary),var(--team-secondary));
+    color:var(--team-accent);
+    border-color:color-mix(in srgb, var(--team-accent) 35%, transparent);
+  }
+  .board .owner-label { color:var(--team-primary); }
+  .board .control:not(.secondary) {
+    background:var(--team-primary);
+    color:var(--team-accent);
+    border:1px solid var(--team-secondary);
+  }
+  .board .score-summary,
+  .board .winner-note,
+  .board .payout-box,
+  .board .winner-display,
+  .board .week-lock-banner {
+    border-color:color-mix(in srgb, var(--team-secondary) 70%, #555 30%);
+  }
+
+  .board.week-locked {
+    opacity:.72;
+  }
+  .week-lock-banner {
+    margin:10px auto 16px;
+    max-width:720px;
+    padding:12px 16px;
+    border-radius:12px;
+    background:#221a27;
+    border:1px solid #5a4563;
+    color:#ddd3e3;
+    text-align:center;
+    font-weight:800;
+  }
+  .board.week-locked .card {
+    cursor:not-allowed;
+  }
+  .board.week-locked .card .front {
+    opacity:.45;
+  }
+
+  @media (max-width:600px) {
+    main { padding-left:9px; padding-right:9px; }
+    .board { padding:14px; }
+    .card { height:105px; }
+    .front { font-size:43px; }
+    .back { font-size:53px; }
+    .squares { gap:8px; grid-template-columns:repeat(2, 1fr); }
+    .nav { max-height:92px; overflow:auto; justify-content:flex-start; }
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<header>
+  <h1>🏈 Monday Night Football Pick a Square!</h1>
+  <p class="subtitle">Pick one square for each Monday Night Football game. Every board has all 10 digits (0–9), used once. Unclaimed squares remain open until manually picked. Winning numbers are based on halftime and final score digits.</p>
+  <div class="identity-bar">
+    <span>You are: <strong id="currentPlayerName">Not registered</strong></span>
+    <button onclick="openPlayerRegistration()">Change player</button>
+  </div>
+  <div class="nav" id="nav"></div>
+</header>
+
+<main id="boards"></main>
+
+<div class="bottom-controls">
+  <button class="control secondary" onclick="openAdminReset()">🔒 Admin Reset This Page</button>
+</div>
+<p class="footer-note">
+  Manual picks only. A square is not assigned until a registered player taps it and confirms the pick.
+  One square per player per Monday Night Football game. Unclaimed squares remain open and are never auto-assigned.
+  Every board contains the digits 0–9 exactly once. Each claimed square costs $2. There is no rollover.
+</p>
+
+<div class="modal hidden" id="playerModal">
+  <div class="dialog">
+    <h2>Who are you?</h2>
+    <p>Choose your name. This device will remember your selection.</p>
+    <div id="playerButtons"></div>
+  </div>
+</div>
+
+<div class="modal hidden" id="adminModal">
+  <div class="dialog">
+    <button class="close" onclick="closeAdminReset()">×</button>
+    <h2>Admin Reset</h2>
+    <p>Enter the admin PIN to reset only the game page currently being viewed.</p>
+    <input id="adminPinInput" type="password" inputmode="numeric" maxlength="12" placeholder="Admin PIN">
+    <button class="control submit" onclick="confirmAdminReset()">Reset This Page</button>
+  </div>
+</div>
+
+<div class="modal hidden" id="modal" style="display:none;">
+  <div class="dialog">
+    <button class="close" onclick="closeModal()">×</button>
+    <h2>Confirm Your Pick</h2>
+    <p id="modalGame"></p>
+    <div id="confirmPlayer" style="font-size:18px;font-weight:800;margin:12px 0;"></div>
+    <button class="control submit" onclick="submitPick()">Confirm This Square</button>
+  </div>
+</div>
+
+<script>
+
+const TEAM_COLORS = {
+  "Arizona Cardinals": ["#97233F","#000000","#FFB612"],
+  "Atlanta Falcons": ["#A71930","#000000","#A5ACAF"],
+  "Baltimore Ravens": ["#241773","#000000","#9E7C0C"],
+  "Buffalo Bills": ["#00338D","#C60C30","#FFFFFF"],
+  "Carolina Panthers": ["#0085CA","#101820","#BFC0BF"],
+  "Chicago Bears": ["#0B162A","#C83803","#FFFFFF"],
+  "Cincinnati Bengals": ["#FB4F14","#000000","#FFFFFF"],
+  "Cleveland Browns": ["#311D00","#FF3C00","#FFFFFF"],
+  "Dallas Cowboys": ["#003594","#041E42","#869397"],
+  "Denver Broncos": ["#FB4F14","#002244","#FFFFFF"],
+  "Detroit Lions": ["#0076B6","#B0B7BC","#000000"],
+  "Green Bay Packers": ["#203731","#FFB612","#FFFFFF"],
+  "Houston Texans": ["#03202F","#A71930","#FFFFFF"],
+  "Indianapolis Colts": ["#002C5F","#A2AAAD","#FFFFFF"],
+  "Jacksonville Jaguars": ["#006778","#101820","#D7A22A"],
+  "Kansas City Chiefs": ["#E31837","#FFB81C","#FFFFFF"],
+  "Las Vegas Raiders": ["#000000","#A5ACAF","#FFFFFF"],
+  "Los Angeles Chargers": ["#0080C6","#FFC20E","#FFFFFF"],
+  "Los Angeles Rams": ["#003594","#FFA300","#FFFFFF"],
+  "Miami Dolphins": ["#008E97","#FC4C02","#FFFFFF"],
+  "Minnesota Vikings": ["#4F2683","#FFC62F","#FFFFFF"],
+  "New England Patriots": ["#002244","#C60C30","#B0B7BC"],
+  "New Orleans Saints": ["#D3BC8D","#101820","#FFFFFF"],
+  "New York Giants": ["#0B2265","#A71930","#FFFFFF"],
+  "New York Jets": ["#125740","#000000","#FFFFFF"],
+  "Philadelphia Eagles": ["#004C54","#A5ACAF","#000000"],
+  "Pittsburgh Steelers": ["#FFB612","#101820","#FFFFFF"],
+  "San Francisco 49ers": ["#AA0000","#B3995D","#FFFFFF"],
+  "Seattle Seahawks": ["#002244","#69BE28","#A5ACAF"],
+  "Tampa Bay Buccaneers": ["#D50A0A","#34302B","#FF7900"],
+  "Tennessee Titans": ["#0C2340","#4B92DB","#C8102E"],
+  "Washington Commanders": ["#5A1414","#FFB612","#FFFFFF"]
+};
+
+function getHomeTeam(game) {
+  if (game.homeTeam) return game.homeTeam;
+  if (game.home) return game.home;
+  if (game.team2) return game.team2;
+  if (game.matchup) {
+    const parts = game.matchup.split(/\s+(?:vs\.?|@)\s+/i);
+    if (parts.length >= 2) return parts[parts.length - 1].trim();
+  }
+  if (game.opponent && game.location && String(game.location).toUpperCase().includes("HOME")) {
+    return game.opponent;
+  }
+  // Monday Night board game titles commonly store away/home as opponent/team labels.
+  if (game.awayTeam && game.homeTeam) return game.homeTeam;
+  return game.opponent || "NFL";
+}
+
+function applyHomeTeamTheme(i) {
+  const board = document.getElementById(`board-${i}`);
+  if (!board) return;
+  const home = getHomeTeam(games[i]);
+  const colors = TEAM_COLORS[home] || ["#243447","#52677D","#FFFFFF"];
+  board.style.setProperty("--team-primary", colors[0]);
+  board.style.setProperty("--team-secondary", colors[1]);
+  board.style.setProperty("--team-accent", colors[2]);
+  board.dataset.homeTeam = home;
+}
+
+const games = [
+  {week:1, date:"Monday, September 14", time:"7:15 PM CT", away:"Denver Broncos", awayAbbr:"DEN", home:"Kansas City Chiefs", homeAbbr:"KC", kickoff:"2026-09-14T19:15:00-05:00"},
+  {week:2, date:"Monday, September 21", time:"7:15 PM CT", away:"New York Giants", awayAbbr:"NYG", home:"Los Angeles Rams", homeAbbr:"LAR", kickoff:"2026-09-21T19:15:00-05:00"},
+  {week:3, date:"Monday, September 28", time:"7:15 PM CT", away:"Philadelphia Eagles", awayAbbr:"PHI", home:"Chicago Bears", homeAbbr:"CHI", kickoff:"2026-09-28T19:15:00-05:00"},
+  {week:4, date:"Monday, October 5", time:"7:15 PM CT", away:"Atlanta Falcons", awayAbbr:"ATL", home:"New Orleans Saints", homeAbbr:"NO", kickoff:"2026-10-05T19:15:00-05:00"},
+  {week:5, date:"Monday, October 12", time:"7:15 PM CT", away:"Buffalo Bills", awayAbbr:"BUF", home:"Los Angeles Rams", homeAbbr:"LAR", kickoff:"2026-10-12T19:15:00-05:00"},
+  {week:6, date:"Monday, October 19", time:"7:15 PM CT", away:"Washington Commanders", awayAbbr:"WSH", home:"San Francisco 49ers", homeAbbr:"SF", kickoff:"2026-10-19T19:15:00-05:00"},
+  {week:7, date:"Monday, October 26", time:"7:15 PM CT", away:"Dallas Cowboys", awayAbbr:"DAL", home:"Philadelphia Eagles", homeAbbr:"PHI", kickoff:"2026-10-26T19:15:00-05:00"},
+  {week:8, date:"Monday, November 2", time:"7:15 PM CT", away:"Chicago Bears", awayAbbr:"CHI", home:"Seattle Seahawks", homeAbbr:"SEA", kickoff:"2026-11-02T19:15:00-06:00"},
+  {week:9, date:"Monday, November 9", time:"7:15 PM CT", away:"Buffalo Bills", awayAbbr:"BUF", home:"Minnesota Vikings", homeAbbr:"MIN", kickoff:"2026-11-09T19:15:00-06:00"},
+  {week:10, date:"Monday, November 16", time:"7:15 PM CT", away:"Los Angeles Chargers", awayAbbr:"LAC", home:"Baltimore Ravens", homeAbbr:"BAL", kickoff:"2026-11-16T19:15:00-06:00"},
+  {week:11, date:"Monday, November 23", time:"7:15 PM CT", away:"Cincinnati Bengals", awayAbbr:"CIN", home:"Washington Commanders", homeAbbr:"WSH", kickoff:"2026-11-23T19:15:00-06:00"},
+  {week:12, date:"Monday, November 30", time:"7:15 PM CT", away:"Carolina Panthers", awayAbbr:"CAR", home:"Tampa Bay Buccaneers", homeAbbr:"TB", kickoff:"2026-11-30T19:15:00-06:00"},
+  {week:13, date:"Monday, December 7", time:"7:15 PM CT", away:"Dallas Cowboys", awayAbbr:"DAL", home:"Seattle Seahawks", homeAbbr:"SEA", kickoff:"2026-12-07T19:15:00-06:00"},
+  {week:14, date:"Monday, December 14", time:"7:15 PM CT", away:"Pittsburgh Steelers", awayAbbr:"PIT", home:"Jacksonville Jaguars", homeAbbr:"JAX", kickoff:"2026-12-14T19:15:00-06:00"},
+  {week:15, date:"Monday, December 21", time:"7:15 PM CT", away:"New England Patriots", awayAbbr:"NE", home:"Kansas City Chiefs", homeAbbr:"KC", kickoff:"2026-12-21T19:15:00-06:00"},
+  {week:16, date:"Monday, December 28", time:"7:15 PM CT", away:"New York Giants", awayAbbr:"NYG", home:"Detroit Lions", homeAbbr:"DET", kickoff:"2026-12-28T19:15:00-06:00"},
+  {week:17, date:"Monday, January 4, 2027", time:"7:15 PM CT", away:"Houston Texans", awayAbbr:"HOU", home:"Green Bay Packers", homeAbbr:"GB", kickoff:"2027-01-04T19:15:00-06:00"}
+];
+
+const ALLOWED_PLAYERS = ["Crissy", "Cheryl", "Karen", "Bob", "Teri", "Cole", "Denise", "Kellen", "Alex", "Ed"];
+const PLAYER_ID_KEY = "mnf-player-name";
+let currentPlayer = localStorage.getItem(PLAYER_ID_KEY) || null;
+
+function renderPlayerIdentity() {
+  const el = document.getElementById('currentPlayerName');
+  if (el) el.textContent = currentPlayer || 'Not registered';
+}
+
+function openPlayerRegistration() {
+  const modal = document.getElementById('playerModal');
+  const buttons = document.getElementById('playerButtons');
+  buttons.innerHTML = ALLOWED_PLAYERS.map(name =>
+    `<button class="control" style="width:100%;margin:5px 0;" onclick="selectRegisteredPlayer('${name}')">${name}</button>`
+  ).join('');
+  modal.classList.remove('hidden');
+}
+
+function selectRegisteredPlayer(name) {
+  if (!ALLOWED_PLAYERS.includes(name)) return;
+  currentPlayer = name;
+  localStorage.setItem(PLAYER_ID_KEY, name);
+  document.getElementById('playerModal').classList.add('hidden');
+  renderPlayerIdentity();
+}
+
+function ensureRegisteredPlayer() {
+  if (!currentPlayer || !ALLOWED_PLAYERS.includes(currentPlayer)) {
+    currentPlayer = null;
+    openPlayerRegistration();
+    return false;
+  }
+  return true;
+}
+
+
+
+const SUPABASE_URL = "https://hlgnmfrzdhyvpwrkwiha.supabase.co";
+const SUPABASE_KEY = "sb_publishable_2i9Lyx7QsYmZ_dzhTl7jAA_Wu3IBBnh";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+async function loadSharedPicks() {
+  const { data, error } = await sb.from('mnf_board_picks').select('*').order('created_at');
+  if (error) {
+    console.warn('Could not load shared picks', error);
+    return;
+  }
+
+  // Database is authoritative for picks/names. Preserve each page's numbers/results.
+  state.forEach(s => {
+    s.picked = Array(10).fill(false);
+    s.players = [];
+  });
+
+  for (const row of data || []) {
+    const localGameIndex = Number(row.game_index);
+    const s = state[localGameIndex];
+    if (!s) continue;
+    // The board layout is deterministic and identical for every viewer.
+    // Shared picks only claim the square; they do not rewrite its number.
+    const sharedNumber = s.numbers[Number(row.square_index)];
+    s.picked[row.square_index] = true;
+    s.players.push({
+      name: row.player_name,
+      number: sharedNumber,
+      squareIndex: Number(row.square_index),
+      auto: false
+    });
+  }
+
+  saveState();
+  games.forEach((_, i) => renderBoard(i));
+}
+
+async function saveSharedPick(gameIndex, squareIndex, name, number, autoAssigned=false) {
+  const { error } = await sb.from('mnf_board_picks').insert({
+    game_index: gameIndex,
+    square_index: squareIndex,
+    player_name: name,
+    number: Number(number),
+    auto_assigned: Boolean(autoAssigned)
+  });
+  if (error) throw error;
+}
+
+function subscribeSharedPicks() {
+  sb.channel('mnf-board-picks-v7')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'mnf_board_picks' }, async () => {
+      await loadSharedPicks();
+    })
+    .subscribe();
+}
+
+
+const STORAGE_KEY = "mnf-2026-2027-board-state-v7-manual-only-fixed";
+
+function defaultState() {
+  return games.map((_, gameIndex) => ({
+    numbers: boardNumbers(gameIndex),
+    picked: Array(10).fill(false),
+    players: [],
+    autoAssigned: false,
+    rolloverIn: 0,
+    halfResult: null,
+    finalResult: null
+  }));
+}
+
+function loadSavedState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return defaultState();
+    const parsed = JSON.parse(saved);
+    if (!Array.isArray(parsed) || parsed.length !== games.length) return defaultState();
+    parsed.forEach((s, gameIndex) => {
+      s.numbers = boardNumbers(gameIndex);
+      if (!Array.isArray(s.picked) || s.picked.length !== 10) s.picked = Array(10).fill(false);
+      if (!Array.isArray(s.players)) s.players = [];
+    });
+    return parsed;
+  } catch (e) {
+    return defaultState();
+  }
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+let state = loadSavedState();
+let selected = null;
+const ACTIVE_BOARD_KEY = "mnf-active-board-v7";
+let activeBoard = Number(localStorage.getItem(ACTIVE_BOARD_KEY) || 0);
+if (!Number.isInteger(activeBoard) || activeBoard < 0 || activeBoard >= games.length) {
+  activeBoard = 0;
+}
+
+function boardNumbers(gameIndex) {
+  // Deterministic permutation of 0–9.
+  // Because 3 is coprime with 10, this produces every digit exactly once.
+  return Array.from({length: 10}, (_, squareIndex) => (squareIndex * 3 + gameIndex) % 10);
+}
+
+function buildNav() {
+  const nav = document.getElementById('nav');
+  nav.innerHTML = games.map((g,i) =>
+    `<button class="${i===activeBoard?'active':''}" onclick="showBoard(${i})">${!isWeekUnlocked(i) ? '🔒 ' : ''}${g.phase==="PRE" ? "P" : "W"}${g.week}</button>`
+  ).join('');
+}
+
+
+function isWeekUnlocked(i) {
+  if (i === 0) return true;
+  return Boolean(state[i - 1] && state[i - 1].finalResult);
+}
+
+function weekLockMessage(i) {
+  if (i === 0) return '';
+  const prev = games[i - 1];
+  return `🔒 Locked until ${prev.phase === "PRE" ? "Preseason " : ""}Week ${prev.week} has ended and its final score is recorded.`;
+}
+
+function buildBoards() {
+  const boards = document.getElementById('boards');
+  boards.innerHTML = games.map((g,i) => `
+    <section class="board ${i===activeBoard?'active':''}" id="board-${i}">
+      <div class="game-number">Monday Night Football • Week ${g.week}</div>
+      <h2 class="game-title">${g.away} @ ${g.home}</h2>
+      <div class="game-meta">
+        <strong>${g.date}</strong> &nbsp;•&nbsp; <strong>${g.time}</strong> &nbsp;•&nbsp; ESPN / ABC
+      </div>
+      <div class="week-lock-banner" id="week-lock-${i}" style="display:none;"></div>
+      <div class="score-summary" id="score-summary-${i}">
+        <strong>Scores:</strong> Not entered yet
+      </div>
+      <div class="score-sync-status" id="score-sync-${i}">Live score sync: waiting for game data</div>
+      <div class="squares" id="squares-${i}"></div>
+      <div class="status" id="status-${i}"></div>
+      <div class="results">
+        <h3>Players & Numbers</h3>
+        <div id="results-${i}"></div>
+      </div>
+
+      <div class="winner-note">
+        <strong>🏆 Winner Rule — Halftime & Final Score</strong><br>
+        Take the last digit of each team's score,
+        add those two digits together, then use the last digit of that total as the winning number.
+        <div class="winner-example">
+          Example: Away 17, Home 13 → 7 + 3 = 10 → winning number is <strong>0</strong>.<br>
+          <strong>💰 No Rollover:</strong> If there is no matching claimed number, there is no payout for that result.
+        </div>
+      </div>
+      <div class="payout-box">
+        <h3>💵 Payout Calculator</h3>
+        <div>Each claimed square = <strong>$2</strong>. Each board uses all 10 digits from 0–9 exactly once.</div>
+        <div>Current pot: <strong id="pot-${i}">$0.00</strong></div>
+        <div style="margin-top:12px;"><strong>Halftime score</strong></div>
+        <div class="score-grid">
+          <input id="half-away-${i}" type="number" min="0" placeholder="${g.away}">
+          <input id="half-home-${i}" type="number" min="0" placeholder="${g.home}">
+        </div>
+        <button class="control" onclick="calculatePayout(${i}, 'half')">Calculate Halftime</button>
+        <div class="payout-result" id="half-result-${i}">Enter halftime scores to calculate.</div>
+
+        <div style="margin-top:14px;"><strong>Final score</strong></div>
+        <div class="score-grid">
+          <input id="final-away-${i}" type="number" min="0" placeholder="${g.away}">
+          <input id="final-home-${i}" type="number" min="0" placeholder="${g.home}">
+        </div>
+        <button class="control" onclick="calculatePayout(${i}, 'final')">Calculate Final</button>
+        <div class="payout-result" id="final-result-${i}">Enter final scores to calculate.</div>
+      </div>
+
+      <div class="winner-display">
+        <h3>🏆 Halftime Winner</h3>
+        <div id="half-winner-${i}">No halftime winner calculated yet. Winning square will be highlighted and labeled HALF.</div>
+      </div>
+
+      <div class="winner-display">
+        <h3>🏆 Final Winner</h3>
+        <div id="final-winner-${i}">No final winner calculated yet. Winning square will be highlighted and labeled FINAL.</div>
+      </div>
+    </section>
+  `).join('');
+
+  games.forEach((_,i) => {
+    applyHomeTeamTheme(i);
+    renderBoard(i);
+  });
+}
+
+
+
+function getWinnerStatus(gameIndex, squareIndex) {
+  const owner = state[gameIndex].players.find(x => Number(x.squareIndex) === Number(squareIndex));
+  if (!owner) return {className:'', label:''};
+
+  const half = state[gameIndex].halfResult;
+  const final = state[gameIndex].finalResult;
+
+  const halfWin = half && Number(owner.number) === Number(half.winningNumber);
+  const finalWin = final && Number(owner.number) === Number(final.winningNumber);
+
+  if (halfWin && finalWin) return {className:'winner-both', label:'HALF + FINAL'};
+  if (halfWin) return {className:'winner-half', label:'HALF'};
+  if (finalWin) return {className:'winner-final', label:'FINAL'};
+  return {className:'', label:''};
+}
+
+function getSquareOwner(gameIndex, squareIndex) {
+  const p = state[gameIndex].players.find(x => Number(x.squareIndex) === Number(squareIndex));
+  return p ? escapeHtml(p.name) : '';
+}
+
+function normalizePlayerName(name) {
+  const found = ALLOWED_PLAYERS.find(p => p.toLowerCase() === name.trim().toLowerCase());
+  return found || null;
+}
+
+function shuffleArray(items) {
+  const arr = [...items];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function renderBoard(i) {
+  applyHomeTeamTheme(i);
+  const squares = document.getElementById(`squares-${i}`);
+  const s = state[i];
+  const unlocked = isWeekUnlocked(i);
+  const boardEl = document.getElementById(`board-${i}`);
+  if (boardEl) boardEl.classList.toggle('week-locked', !unlocked);
+  const lockEl = document.getElementById(`week-lock-${i}`);
+  if (lockEl) {
+    lockEl.style.display = unlocked ? 'none' : 'block';
+    lockEl.textContent = unlocked ? '' : weekLockMessage(i);
+  }
+  squares.innerHTML = s.numbers.map((num,j) => `
+    ${(() => {
+      const w = getWinnerStatus(i, j);
+      return `<button class="card ${s.picked[j]?'flipped':''} ${w.className}" ${(s.picked[j] || !unlocked)?'disabled':''}
+        onclick="openModal(${i},${j})" aria-label="Square ${j+1}${s.picked[j] ? ', picked by ' + getSquareOwner(i,j) : ''}">
+        <div class="card-inner">
+          <div class="face front">?</div>
+          <div class="face back">
+            ${w.label ? `<div class="winner-tag">${w.label}</div>` : ''}
+            <div class="picked-number">${num}</div>
+            <div class="owner-label">${getSquareOwner(i, j)}</div>
+          </div>
+        </div>
+      </button>`;
+    })()}
+  `).join('');
+
+  const remaining = s.picked.filter(x=>!x).length;
+  document.getElementById(`status-${i}`).textContent =
+    !unlocked
+      ? weekLockMessage(i)
+      : (remaining
+          ? `${remaining} square${remaining===1?'':'s'} available • One square per listed player`
+          : 'All 10 squares have been picked!');
+
+  const result = document.getElementById(`results-${i}`);
+  result.innerHTML = s.players.length
+    ? s.players.map(p => `<div class="result-row"><span>${escapeHtml(p.name)}${p.auto ? '' : ''}</span><strong>${p.number}</strong></div>`).join('')
+    : '<div class="empty">No picks yet.</div>';
+  renderPayout(i);
+}
+
+
+
+const SCORE_FEED_URL = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard";
+
+function gameDateForScoreFeed(game) {
+  if (!game.kickoff) return null;
+  const d = new Date(game.kickoff);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}${m}${day}`;
+}
+
+function periodTotal(competitor, throughPeriod) {
+  const lines = competitor?.linescores || [];
+  return lines.slice(0, throughPeriod).reduce((sum, x) => sum + Number(x.value || x.displayValue || 0), 0);
+}
+
+async function syncGameScore(i) {
+  const game = games[i];
+  const date = gameDateForScoreFeed(game);
+  const statusEl = document.getElementById(`score-sync-${i}`);
+  if (!date) return;
+
+  try {
+    const response = await fetch(`${SCORE_FEED_URL}?dates=${date}`);
+    if (!response.ok) throw new Error(`score service ${response.status}`);
+    const data = await response.json();
+    const event = (data.events || []).find(ev => {
+      const competitors = ev?.competitions?.[0]?.competitors || [];
+      const abbrs = competitors.map(c => c?.team?.abbreviation);
+      return abbrs.includes(game.awayAbbr) && abbrs.includes(game.homeAbbr);
+    });
+
+    if (!event) {
+      if (statusEl) statusEl.textContent = 'Live score sync: game data not available yet';
+      return;
+    }
+
+    const competition = event.competitions[0];
+    const away = competition.competitors.find(c => c.homeAway === 'away');
+    const home = competition.competitors.find(c => c.homeAway === 'home');
+    const period = Number(event.status?.period || 0);
+    const completed = Boolean(event.status?.type?.completed);
+    let changed = false;
+
+    if (period >= 3 && away?.linescores?.length >= 2 && home?.linescores?.length >= 2 && !state[i].halfResult) {
+      const av = document.getElementById(`half-away-${i}`);
+      const hv = document.getElementById(`half-home-${i}`);
+      if (av) av.value = periodTotal(away, 2);
+      if (hv) hv.value = periodTotal(home, 2);
+      calculatePayout(i, 'half');
+      changed = true;
+    }
+
+    if (completed && !state[i].finalResult) {
+      const av = document.getElementById(`final-away-${i}`);
+      const hv = document.getElementById(`final-home-${i}`);
+      if (av) av.value = Number(away?.score || 0);
+      if (hv) hv.value = Number(home?.score || 0);
+      calculatePayout(i, 'final');
+      changed = true;
+    }
+
+    if (statusEl) {
+      const detail = event.status?.type?.shortDetail || event.status?.type?.description || 'game found';
+      statusEl.textContent = `Live score sync: ${detail} • checked ${new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
+    }
+    if (changed) renderBoard(i);
+  } catch (err) {
+    if (statusEl) statusEl.textContent = 'Live score sync temporarily unavailable — manual score entry still works';
+    console.warn('Score sync failed', err);
+  }
+}
+
+function syncRelevantScores() {
+  games.forEach((g, i) => {
+    if (!g.kickoff) return;
+    const kickoff = new Date(g.kickoff).getTime();
+    const now = Date.now();
+    if (now >= kickoff - 30 * 60 * 1000 && now <= kickoff + 6 * 60 * 60 * 1000) {
+      if (!state[i].halfResult || !state[i].finalResult) syncGameScore(i);
+    }
+  });
+}
+
+function paidSquareCount(i) {
+  return state[i].picked.filter(Boolean).length;
+}
+
+function rolloverInto(i) { return 0; }
+
+function totalPot(i) { return paidSquareCount(i) * 2; }
+
+function winningNumberFromScores(awayScore, homeScore) {
+  return ((Math.abs(Number(awayScore)) % 10) + (Math.abs(Number(homeScore)) % 10)) % 10;
+}
+
+function matchingPlayers(i, winningNumber) {
+  return state[i].players.filter(p => Number(p.number) === Number(winningNumber));
+}
+
+function calculatePayout(i, period) {
+  const awayInput = document.getElementById(`${period}-away-${i}`);
+  const homeInput = document.getElementById(`${period}-home-${i}`);
+  if (!awayInput || !homeInput || awayInput.value === '' || homeInput.value === '') {
+    alert('Enter both team scores first.');
+    return;
+  }
+
+  const awayScore = Number(awayInput.value);
+  const homeScore = Number(homeInput.value);
+  const winningNumber = winningNumberFromScores(awayScore, homeScore);
+  const matches = matchingPlayers(i, winningNumber);
+  const pot = totalPot(i);
+
+  const result = matches.length
+    ? {
+        awayScore, homeScore, winningNumber,
+        winners: matches.map(p => p.name),
+        payoutEach: pot / matches.length,
+        pot,
+        rolloverOut: 0
+      }
+    : {
+        awayScore, homeScore, winningNumber,
+        winners: [],
+        payoutEach: 0,
+        pot,
+        rolloverOut: 0
+      };
+
+  if (period === 'half') state[i].halfResult = result;
+  if (period === 'final') {
+    state[i].finalResult = result;
+  }
+
+  saveState();
+  renderBoard(i);
+  if (period === 'final' && i + 1 < state.length) {
+    renderBoard(i + 1);
+    renderPayout(i + 1);
+    buildNav();
+  }
+}
+
+function renderPayout(i) {
+  const scoreSummary = document.getElementById(`score-summary-${i}`);
+  const savedHalf = state[i].halfResult;
+  const savedFinal = state[i].finalResult;
+
+  if (scoreSummary) {
+    if (savedFinal) {
+      scoreSummary.innerHTML =
+        `<div class="score-line">HALFTIME: ${savedHalf ? `${games[i].away} ${savedHalf.awayScore} — ${games[i].home} ${savedHalf.homeScore}` : 'Not entered'}</div>
+         <div class="score-line">FINAL: ${games[i].away} ${savedFinal.awayScore} — ${games[i].home} ${savedFinal.homeScore}</div>`;
+    } else if (savedHalf) {
+      scoreSummary.innerHTML =
+        `<div class="score-line">HALFTIME: ${games[i].away} ${savedHalf.awayScore} — ${games[i].home} ${savedHalf.homeScore}</div>
+         <div class="score-line">FINAL: Game not finished</div>`;
+    } else {
+      scoreSummary.innerHTML = `<strong>Scores:</strong> Not entered yet`;
+    }
+  }
+
+  const potEl = document.getElementById(`pot-${i}`);
+  const rollEl = document.getElementById(`rollover-in-${i}`);
+  if (potEl) potEl.textContent = `$${totalPot(i).toFixed(2)}`;
+  if (rollEl) rollEl.textContent = `$${rolloverInto(i).toFixed(2)}`;
+
+  const half = state[i].halfResult;
+  const final = state[i].finalResult;
+
+  if (half) {
+    const halfEl = document.getElementById(`half-result-${i}`);
+    const halfWinnerEl = document.getElementById(`half-winner-${i}`);
+    if (halfEl) {
+      const detail = half.winners.length
+        ? `Winner${half.winners.length > 1 ? 's' : ''}: <strong>${half.winners.map(escapeHtml).join(', ')}</strong><br>Payout: <strong>$${half.payoutEach.toFixed(2)}${half.winners.length > 1 ? ' each' : ''}</strong>`
+        : `No matching claimed number. <strong>No payout.</strong>`;
+      halfEl.innerHTML = `Winning number: <strong>${half.winningNumber}</strong><br>${detail}`;
+    }
+    if (halfWinnerEl) {
+      halfWinnerEl.innerHTML = half.winners.length
+        ? `<div class="big-winner">${half.winners.map(escapeHtml).join(', ')}</div>
+           Winning number: <strong>${half.winningNumber}</strong><br>
+           Payout: <strong>$${half.payoutEach.toFixed(2)}${half.winners.length > 1 ? ' each' : ''}</strong>`
+        : `No halftime winner for number <strong>${half.winningNumber}</strong>.<br><strong>No payout.</strong>`;
+    }
+    const hv = document.getElementById(`half-away-${i}`);
+    const ho = document.getElementById(`half-home-${i}`);
+    if (hv) hv.value = half.awayScore;
+    if (ho) ho.value = half.homeScore;
+  }
+
+  if (final) {
+    const finalEl = document.getElementById(`final-result-${i}`);
+    const finalWinnerEl = document.getElementById(`final-winner-${i}`);
+    if (finalEl) {
+      const detail = final.winners.length
+        ? `Winner${final.winners.length > 1 ? 's' : ''}: <strong>${final.winners.map(escapeHtml).join(', ')}</strong><br>Payout: <strong>$${final.payoutEach.toFixed(2)}${final.winners.length > 1 ? ' each' : ''}</strong>`
+        : `No matching claimed number. <strong>No payout.</strong>`;
+      finalEl.innerHTML = `Winning number: <strong>${final.winningNumber}</strong><br>${detail}`;
+    }
+    if (finalWinnerEl) {
+      finalWinnerEl.innerHTML = final.winners.length
+        ? `<div class="big-winner">${final.winners.map(escapeHtml).join(', ')}</div>
+           Winning number: <strong>${final.winningNumber}</strong><br>
+           Final payout: <strong>$${final.payoutEach.toFixed(2)}${final.winners.length > 1 ? ' each' : ''}</strong>`
+        : `No final winner for number <strong>${final.winningNumber}</strong>.<br><strong>No payout.</strong>`;
+    }
+    const fv = document.getElementById(`final-away-${i}`);
+    const fo = document.getElementById(`final-home-${i}`);
+    if (fv) fv.value = final.awayScore;
+    if (fo) fo.value = final.homeScore;
+  }
+}
+
+function showBoard(i) {
+  activeBoard = i;
+  localStorage.setItem(ACTIVE_BOARD_KEY, String(i));
+  syncGameScore(i);
+  document.querySelectorAll('.board').forEach((b,n)=>b.classList.toggle('active',n===i));
+  buildNav();
+  renderBoard(i);
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+async function openModal(gameIndex, squareIndex) {
+  if (!isWeekUnlocked(gameIndex)) {
+    alert(weekLockMessage(gameIndex));
+    return;
+  }
+  if (state[gameIndex].picked[squareIndex]) return;
+  if (hasKickedOff(gameIndex)) {
+    alert('This game has already kicked off. New picks are closed.');
+    return;
+  }
+  if (!ensureRegisteredPlayer()) return;
+
+  const s = state[gameIndex];
+  const alreadyPicked = s.players.some(p => p.name.toLowerCase() === currentPlayer.toLowerCase());
+  if (alreadyPicked) {
+    alert(`${currentPlayer} already has a square for Week ${games[gameIndex].week}.`);
+    return;
+  }
+
+  selected = { gameIndex, squareIndex };
+  const game = games[gameIndex];
+  const modalGame = document.getElementById('modalGame');
+  const confirmPlayer = document.getElementById('confirmPlayer');
+
+  if (modalGame) {
+    modalGame.textContent = `${game.awayTeam || ''}${game.awayTeam ? ' at ' : ''}${game.homeTeam || ''} • Square ${squareIndex + 1}`;
+  }
+  if (confirmPlayer) {
+    confirmPlayer.textContent = `Player: ${currentPlayer}`;
+  }
+
+  const modal = document.getElementById('modal');
+  modal.style.display = 'flex';
+  modal.classList.remove('hidden');
+}
+
+function closeModal() {
+  const modal = document.getElementById('modal');
+  modal.classList.add('hidden');
+  modal.style.display = 'none';
+  selected = null;
+}
+
+async function submitPick() {
+  if (!selected) return;
+  const { gameIndex, squareIndex } = selected;
+
+  if (!ensureRegisteredPlayer()) return;
+  if (state[gameIndex].picked[squareIndex]) {
+    closeModal();
+    await loadSharedPicks();
+    alert('That square was already claimed.');
+    return;
+  }
+
+  const s = state[gameIndex];
+  const alreadyPicked = s.players.some(p => p.name.toLowerCase() === currentPlayer.toLowerCase());
+  if (alreadyPicked) {
+    closeModal();
+    alert(`${currentPlayer} already has a square for Week ${games[gameIndex].week}.`);
+    return;
+  }
+
+  try {
+    await saveSharedPick(gameIndex, squareIndex, currentPlayer, s.numbers[squareIndex], false);
+    s.picked[squareIndex] = true;
+    s.players.push({
+      name: currentPlayer,
+      number: s.numbers[squareIndex],
+      squareIndex,
+      auto: false
+    });
+    saveState();
+    closeModal();
+    renderBoard(gameIndex);
+  } catch (err) {
+    console.warn('Pick save failed', err);
+    closeModal();
+    await loadSharedPicks();
+    const msg = String(err?.message || err || '');
+    if (msg.toLowerCase().includes('duplicate') || msg.includes('23505')) {
+      alert('That square or player was just claimed. The board has refreshed.');
+    } else {
+      alert(`The pick could not be saved. ${msg ? 'Database message: ' + msg : 'Please refresh and try again.'}`);
+    }
+  }
+}
+
+function hasKickedOff(gameIndex) {
+  const kickoff = games[gameIndex].kickoff;
+  return kickoff ? Date.now() >= new Date(kickoff).getTime() : false;
+}
+
+async function autoAssignIfNeeded(gameIndex) {
+  // Manual-only board: never assign a square automatically.
+  return;
+}
+
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target.id === 'modal') closeModal();
+});
+
+
+const ADMIN_PIN = "1172";
+
+function openAdminReset() {
+  document.getElementById('adminPinInput').value = '';
+  document.getElementById('adminModal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('adminPinInput').focus(), 50);
+}
+
+function closeAdminReset() {
+  document.getElementById('adminModal').classList.add('hidden');
+}
+
+function confirmAdminReset() {
+  const pin = document.getElementById('adminPinInput').value;
+  if (pin !== ADMIN_PIN) {
+    alert('Incorrect admin PIN.');
+    return;
+  }
+
+  const game = games[activeBoard];
+  const label = `Monday Night Football Week ${game.week}`;
+
+  if (!confirm(`Reset only ${label}? This will clear this page's picks, names, scores, winners, payout results, and generate a new order of all 10 digits. Other game pages will not be changed.`)) {
+    return;
+  }
+
+  state[activeBoard] = {
+    numbers: boardNumbers(activeBoard),
+    picked: Array(10).fill(false),
+    players: [],
+    autoAssigned: false,
+    rolloverIn: 0,
+    halfResult: null,
+    finalResult: null
+  };
+
+  saveState();
+  closeAdminReset();
+  renderBoard(activeBoard);
+}
+
+document.getElementById('adminPinInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') confirmAdminReset();
+});
+document.getElementById('adminModal').addEventListener('click', e => {
+  if (e.target.id === 'adminModal') closeAdminReset();
+});
+
+function newAllBoards() {
+  state = games.map((_, gameIndex) => ({
+    numbers: boardNumbers(gameIndex),
+    picked: Array(10).fill(false),
+    players: [],
+    autoAssigned: false,
+    rolloverIn: 0,
+    halfResult: null,
+    finalResult: null
+  }));
+  saveState();
+  buildBoards();
+}
+
+function clearAllPicks() {
+  state.forEach((s,i) => {
+    s.picked = Array(10).fill(false);
+    s.players = [];
+    s.autoAssigned = false;
+  });
+  saveState();
+  games.forEach((_,i)=>renderBoard(i));
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;'
+  }[c]));
+}
+
+buildNav();
+buildBoards();
+renderPlayerIdentity();
+if (!currentPlayer || !ALLOWED_PLAYERS.includes(currentPlayer)) {
+  setTimeout(openPlayerRegistration, 300);
+}
+loadSharedPicks().then(() => {
+  subscribeSharedPicks();
+  syncRelevantScores();
+});
+setInterval(syncRelevantScores, 60000);
+setTimeout(syncRelevantScores, 1200);
+</script>
+</body>
+</html>

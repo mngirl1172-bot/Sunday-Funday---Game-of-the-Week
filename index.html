@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Monday Night Football Pick a Square</title>
+<title>FOX Game of the Week Pick a Square</title>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -339,8 +339,8 @@
 <body>
 
 <header>
-  <h1>🏈 Monday Night Football Pick a Square!</h1>
-  <p class="subtitle">Pick one square for each Monday Night Football game. Every board has all 10 digits (0–9), used once. Unclaimed squares remain open until manually picked. Winning numbers are based on halftime and final score digits.</p>
+  <h1>🦊🏈 FOX Game of the Week Pick a Square!</h1>
+  <p class="subtitle">Pick one square for each FOX Game of the Week. Every board has all 10 digits (0–9), used once. If FOX has not announced the featured game yet, that week will show a placeholder and remain closed until the matchup is announced. Winning numbers are based on halftime and final score digits.</p>
   <div class="identity-bar">
     <span>You are: <strong id="currentPlayerName">Not registered</strong></span>
     <button onclick="openPlayerRegistration()">Change player</button>
@@ -354,8 +354,8 @@
   <button class="control secondary" onclick="openAdminReset()">🔒 Admin Reset This Page</button>
 </div>
 <p class="footer-note">
-  Manual picks only. A square is not assigned until a registered player taps it and confirms the pick.
-  One square per player per Monday Night Football game. Unclaimed squares remain open and are never auto-assigned.
+  Manual picks only. A square is not assigned until a registered player taps it and confirms the pick. TBD weeks stay closed until FOX announces the featured matchup.
+  One square per player per FOX Game of the Week. Unclaimed squares remain open and are never auto-assigned.
   Every board contains the digits 0–9 exactly once. Each claimed square costs $2. There is no rollover.
 </p>
 
@@ -425,19 +425,8 @@ const TEAM_COLORS = {
 };
 
 function getHomeTeam(game) {
-  if (game.homeTeam) return game.homeTeam;
-  if (game.home) return game.home;
-  if (game.team2) return game.team2;
-  if (game.matchup) {
-    const parts = game.matchup.split(/\s+(?:vs\.?|@)\s+/i);
-    if (parts.length >= 2) return parts[parts.length - 1].trim();
-  }
-  if (game.opponent && game.location && String(game.location).toUpperCase().includes("HOME")) {
-    return game.opponent;
-  }
-  // Monday Night board game titles commonly store away/home as opponent/team labels.
-  if (game.awayTeam && game.homeTeam) return game.homeTeam;
-  return game.opponent || "NFL";
+  if (!game || !game.announced) return "NFL";
+  return game.home || game.homeTeam || game.team2 || game.opponent || "NFL";
 }
 
 function applyHomeTeamTheme(i) {
@@ -451,28 +440,10 @@ function applyHomeTeamTheme(i) {
   board.dataset.homeTeam = home;
 }
 
-const games = [
-  {week:1, date:"Monday, September 14", time:"7:15 PM CT", away:"Denver Broncos", awayAbbr:"DEN", home:"Kansas City Chiefs", homeAbbr:"KC", kickoff:"2026-09-14T19:15:00-05:00"},
-  {week:2, date:"Monday, September 21", time:"7:15 PM CT", away:"New York Giants", awayAbbr:"NYG", home:"Los Angeles Rams", homeAbbr:"LAR", kickoff:"2026-09-21T19:15:00-05:00"},
-  {week:3, date:"Monday, September 28", time:"7:15 PM CT", away:"Philadelphia Eagles", awayAbbr:"PHI", home:"Chicago Bears", homeAbbr:"CHI", kickoff:"2026-09-28T19:15:00-05:00"},
-  {week:4, date:"Monday, October 5", time:"7:15 PM CT", away:"Atlanta Falcons", awayAbbr:"ATL", home:"New Orleans Saints", homeAbbr:"NO", kickoff:"2026-10-05T19:15:00-05:00"},
-  {week:5, date:"Monday, October 12", time:"7:15 PM CT", away:"Buffalo Bills", awayAbbr:"BUF", home:"Los Angeles Rams", homeAbbr:"LAR", kickoff:"2026-10-12T19:15:00-05:00"},
-  {week:6, date:"Monday, October 19", time:"7:15 PM CT", away:"Washington Commanders", awayAbbr:"WSH", home:"San Francisco 49ers", homeAbbr:"SF", kickoff:"2026-10-19T19:15:00-05:00"},
-  {week:7, date:"Monday, October 26", time:"7:15 PM CT", away:"Dallas Cowboys", awayAbbr:"DAL", home:"Philadelphia Eagles", homeAbbr:"PHI", kickoff:"2026-10-26T19:15:00-05:00"},
-  {week:8, date:"Monday, November 2", time:"7:15 PM CT", away:"Chicago Bears", awayAbbr:"CHI", home:"Seattle Seahawks", homeAbbr:"SEA", kickoff:"2026-11-02T19:15:00-06:00"},
-  {week:9, date:"Monday, November 9", time:"7:15 PM CT", away:"Buffalo Bills", awayAbbr:"BUF", home:"Minnesota Vikings", homeAbbr:"MIN", kickoff:"2026-11-09T19:15:00-06:00"},
-  {week:10, date:"Monday, November 16", time:"7:15 PM CT", away:"Los Angeles Chargers", awayAbbr:"LAC", home:"Baltimore Ravens", homeAbbr:"BAL", kickoff:"2026-11-16T19:15:00-06:00"},
-  {week:11, date:"Monday, November 23", time:"7:15 PM CT", away:"Cincinnati Bengals", awayAbbr:"CIN", home:"Washington Commanders", homeAbbr:"WSH", kickoff:"2026-11-23T19:15:00-06:00"},
-  {week:12, date:"Monday, November 30", time:"7:15 PM CT", away:"Carolina Panthers", awayAbbr:"CAR", home:"Tampa Bay Buccaneers", homeAbbr:"TB", kickoff:"2026-11-30T19:15:00-06:00"},
-  {week:13, date:"Monday, December 7", time:"7:15 PM CT", away:"Dallas Cowboys", awayAbbr:"DAL", home:"Seattle Seahawks", homeAbbr:"SEA", kickoff:"2026-12-07T19:15:00-06:00"},
-  {week:14, date:"Monday, December 14", time:"7:15 PM CT", away:"Pittsburgh Steelers", awayAbbr:"PIT", home:"Jacksonville Jaguars", homeAbbr:"JAX", kickoff:"2026-12-14T19:15:00-06:00"},
-  {week:15, date:"Monday, December 21", time:"7:15 PM CT", away:"New England Patriots", awayAbbr:"NE", home:"Kansas City Chiefs", homeAbbr:"KC", kickoff:"2026-12-21T19:15:00-06:00"},
-  {week:16, date:"Monday, December 28", time:"7:15 PM CT", away:"New York Giants", awayAbbr:"NYG", home:"Detroit Lions", homeAbbr:"DET", kickoff:"2026-12-28T19:15:00-06:00"},
-  {week:17, date:"Monday, January 4, 2027", time:"7:15 PM CT", away:"Houston Texans", awayAbbr:"HOU", home:"Green Bay Packers", homeAbbr:"GB", kickoff:"2027-01-04T19:15:00-06:00"}
-];
+const games = [{"week":1,"date":"Sunday, September 13","time":"3:25 PM CT","away":"Washington Commanders","awayAbbr":"WSH","home":"Philadelphia Eagles","homeAbbr":"PHI","kickoff":"2026-09-13T15:25:00-05:00","announced":true},{"week":2,"date":"Sunday, September 20","time":"TBD","announced":false},{"week":3,"date":"Sunday, September 27","time":"TBD","announced":false},{"week":4,"date":"Sunday, October 4","time":"TBD","announced":false},{"week":5,"date":"Sunday, October 11","time":"3:25 PM CT","away":"Chicago Bears","awayAbbr":"CHI","home":"Green Bay Packers","homeAbbr":"GB","kickoff":"2026-10-11T15:25:00-05:00","announced":true},{"week":6,"date":"Sunday, October 18","time":"TBD","announced":false},{"week":7,"date":"Sunday, October 25","time":"3:25 PM CT","away":"Green Bay Packers","awayAbbr":"GB","home":"Detroit Lions","homeAbbr":"DET","kickoff":"2026-10-25T15:25:00-05:00","announced":true},{"week":8,"date":"Sunday, November 1","time":"TBD","announced":false},{"week":9,"date":"Sunday, November 8","time":"3:25 PM CT","away":"Green Bay Packers","awayAbbr":"GB","home":"New England Patriots","homeAbbr":"NE","kickoff":"2026-11-08T15:25:00-06:00","announced":true},{"week":10,"date":"Sunday, November 15","time":"TBD","announced":false},{"week":11,"date":"Sunday, November 22","time":"TBD","announced":false},{"week":12,"date":"Thursday, November 26","time":"3:30 PM CT","away":"Philadelphia Eagles","awayAbbr":"PHI","home":"Dallas Cowboys","homeAbbr":"DAL","kickoff":"2026-11-26T15:30:00-06:00","announced":true},{"week":13,"date":"Sunday, December 6","time":"TBD","announced":false},{"week":14,"date":"Sunday, December 13","time":"TBD","announced":false},{"week":15,"date":"Sunday, December 20","time":"TBD","announced":false},{"week":16,"date":"Sunday, December 27","time":"TBD","announced":false},{"week":17,"date":"Sunday, January 3, 2027","time":"TBD","announced":false},{"week":18,"date":"Sunday, January 10, 2027","time":"TBD","announced":false}];
 
 const ALLOWED_PLAYERS = ["Crissy", "Cheryl", "Karen", "Bob", "Teri", "Cole", "Denise", "Kellen", "Alex", "Ed"];
-const PLAYER_ID_KEY = "mnf-player-name";
+const PLAYER_ID_KEY = "fox-gotw-player-name";
 let currentPlayer = localStorage.getItem(PLAYER_ID_KEY) || null;
 
 function renderPlayerIdentity() {
@@ -513,7 +484,7 @@ const SUPABASE_KEY = "sb_publishable_2i9Lyx7QsYmZ_dzhTl7jAA_Wu3IBBnh";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 async function loadSharedPicks() {
-  const { data, error } = await sb.from('mnf_board_picks').select('*').order('created_at');
+  const { data, error } = await sb.from('fox_board_picks').select('*').order('created_at');
   if (error) {
     console.warn('Could not load shared picks', error);
     return;
@@ -546,7 +517,7 @@ async function loadSharedPicks() {
 }
 
 async function saveSharedPick(gameIndex, squareIndex, name, number, autoAssigned=false) {
-  const { error } = await sb.from('mnf_board_picks').insert({
+  const { error } = await sb.from('fox_board_picks').insert({
     game_index: gameIndex,
     square_index: squareIndex,
     player_name: name,
@@ -557,15 +528,15 @@ async function saveSharedPick(gameIndex, squareIndex, name, number, autoAssigned
 }
 
 function subscribeSharedPicks() {
-  sb.channel('mnf-board-picks-v7')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'mnf_board_picks' }, async () => {
+  sb.channel('fox-gotw-board-picks-v1')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'fox_board_picks' }, async () => {
       await loadSharedPicks();
     })
     .subscribe();
 }
 
 
-const STORAGE_KEY = "mnf-2026-2027-board-state-v7-manual-only-fixed";
+const STORAGE_KEY = "fox-gotw-2026-2027-board-state-v1";
 
 function defaultState() {
   return games.map((_, gameIndex) => ({
@@ -602,7 +573,7 @@ function saveState() {
 
 let state = loadSavedState();
 let selected = null;
-const ACTIVE_BOARD_KEY = "mnf-active-board-v7";
+const ACTIVE_BOARD_KEY = "fox-gotw-active-board-v1";
 let activeBoard = Number(localStorage.getItem(ACTIVE_BOARD_KEY) || 0);
 if (!Number.isInteger(activeBoard) || activeBoard < 0 || activeBoard >= games.length) {
   activeBoard = 0;
@@ -617,36 +588,57 @@ function boardNumbers(gameIndex) {
 function buildNav() {
   const nav = document.getElementById('nav');
   nav.innerHTML = games.map((g,i) =>
-    `<button class="${i===activeBoard?'active':''}" onclick="showBoard(${i})">${!isWeekUnlocked(i) ? '🔒 ' : ''}${g.phase==="PRE" ? "P" : "W"}${g.week}</button>`
+    `<button class="${i===activeBoard?'active':''}" onclick="showBoard(${i})">${!g.announced ? '⏳ ' : (!isWeekUnlocked(i) ? '🔒 ' : '')}W${g.week}</button>`
   ).join('');
 }
 
 
+function previousAnnouncedIndex(i) {
+  for (let j = i - 1; j >= 0; j--) {
+    if (games[j] && games[j].announced) return j;
+  }
+  return -1;
+}
+
 function isWeekUnlocked(i) {
-  if (i === 0) return true;
-  return Boolean(state[i - 1] && state[i - 1].finalResult);
+  const game = games[i];
+  if (!game || !game.announced) return false;
+  const prev = previousAnnouncedIndex(i);
+  if (prev === -1) return true;
+  return Boolean(state[prev] && state[prev].finalResult);
 }
 
 function weekLockMessage(i) {
-  if (i === 0) return '';
-  const prev = games[i - 1];
-  return `🔒 Locked until ${prev.phase === "PRE" ? "Preseason " : ""}Week ${prev.week} has ended and its final score is recorded.`;
+  const game = games[i];
+  if (!game || !game.announced) {
+    return `⏳ FOX has not announced the featured Game of the Week for Week ${game ? game.week : i + 1} yet. This board will remain closed until the matchup is announced.`;
+  }
+  const prevIndex = previousAnnouncedIndex(i);
+  if (prevIndex === -1) return '';
+  const prev = games[prevIndex];
+  return `🔒 Locked until the previous announced FOX Game of the Week (Week ${prev.week}) has ended and its final score is recorded.`;
 }
 
 function buildBoards() {
   const boards = document.getElementById('boards');
-  boards.innerHTML = games.map((g,i) => `
+  boards.innerHTML = games.map((g,i) => {
+    const matchup = g.announced ? `${g.away} @ ${g.home}` : `FOX Game of the Week — To Be Announced`;
+    const meta = g.announced
+      ? `<strong>${g.date}</strong> &nbsp;•&nbsp; <strong>${g.time}</strong> &nbsp;•&nbsp; FOX`
+      : `<strong>${g.date}</strong> &nbsp;•&nbsp; <strong>Matchup & time awaiting FOX announcement</strong>`;
+    const awayPlaceholder = g.announced ? g.away : 'Away team';
+    const homePlaceholder = g.announced ? g.home : 'Home team';
+
+    return `
     <section class="board ${i===activeBoard?'active':''}" id="board-${i}">
-      <div class="game-number">Monday Night Football • Week ${g.week}</div>
-      <h2 class="game-title">${g.away} @ ${g.home}</h2>
-      <div class="game-meta">
-        <strong>${g.date}</strong> &nbsp;•&nbsp; <strong>${g.time}</strong> &nbsp;•&nbsp; ESPN / ABC
-      </div>
+      <div class="game-number">FOX Game of the Week • Week ${g.week}</div>
+      <h2 class="game-title">${matchup}</h2>
+      <div class="game-meta">${meta}</div>
       <div class="week-lock-banner" id="week-lock-${i}" style="display:none;"></div>
       <div class="score-summary" id="score-summary-${i}">
-        <strong>Scores:</strong> Not entered yet
+        <strong>Scores:</strong> ${g.announced ? 'Not entered yet' : 'Waiting for FOX matchup announcement'}
       </div>
-      <div class="score-sync-status" id="score-sync-${i}">Live score sync: waiting for game data</div>
+      <div class="score-sync-status" id="score-sync-${i}">${g.announced ? 'Live score sync: waiting for game data' : 'Live score sync: unavailable until matchup is announced'}</div>
       <div class="squares" id="squares-${i}"></div>
       <div class="status" id="status-${i}"></div>
       <div class="results">
@@ -669,32 +661,32 @@ function buildBoards() {
         <div>Current pot: <strong id="pot-${i}">$0.00</strong></div>
         <div style="margin-top:12px;"><strong>Halftime score</strong></div>
         <div class="score-grid">
-          <input id="half-away-${i}" type="number" min="0" placeholder="${g.away}">
-          <input id="half-home-${i}" type="number" min="0" placeholder="${g.home}">
+          <input id="half-away-${i}" type="number" min="0" placeholder="${awayPlaceholder}" ${g.announced ? '' : 'disabled'}>
+          <input id="half-home-${i}" type="number" min="0" placeholder="${homePlaceholder}" ${g.announced ? '' : 'disabled'}>
         </div>
-        <button class="control" onclick="calculatePayout(${i}, 'half')">Calculate Halftime</button>
-        <div class="payout-result" id="half-result-${i}">Enter halftime scores to calculate.</div>
+        <button class="control" onclick="calculatePayout(${i}, 'half')" ${g.announced ? '' : 'disabled'}>Calculate Halftime</button>
+        <div class="payout-result" id="half-result-${i}">${g.announced ? 'Enter halftime scores to calculate.' : 'Waiting for FOX matchup announcement.'}</div>
 
         <div style="margin-top:14px;"><strong>Final score</strong></div>
         <div class="score-grid">
-          <input id="final-away-${i}" type="number" min="0" placeholder="${g.away}">
-          <input id="final-home-${i}" type="number" min="0" placeholder="${g.home}">
+          <input id="final-away-${i}" type="number" min="0" placeholder="${awayPlaceholder}" ${g.announced ? '' : 'disabled'}>
+          <input id="final-home-${i}" type="number" min="0" placeholder="${homePlaceholder}" ${g.announced ? '' : 'disabled'}>
         </div>
-        <button class="control" onclick="calculatePayout(${i}, 'final')">Calculate Final</button>
-        <div class="payout-result" id="final-result-${i}">Enter final scores to calculate.</div>
+        <button class="control" onclick="calculatePayout(${i}, 'final')" ${g.announced ? '' : 'disabled'}>Calculate Final</button>
+        <div class="payout-result" id="final-result-${i}">${g.announced ? 'Enter final scores to calculate.' : 'Waiting for FOX matchup announcement.'}</div>
       </div>
 
       <div class="winner-display">
         <h3>🏆 Halftime Winner</h3>
-        <div id="half-winner-${i}">No halftime winner calculated yet. Winning square will be highlighted and labeled HALF.</div>
+        <div id="half-winner-${i}">${g.announced ? 'No halftime winner calculated yet. Winning square will be highlighted and labeled HALF.' : 'Waiting for FOX matchup announcement.'}</div>
       </div>
 
       <div class="winner-display">
         <h3>🏆 Final Winner</h3>
-        <div id="final-winner-${i}">No final winner calculated yet. Winning square will be highlighted and labeled FINAL.</div>
+        <div id="final-winner-${i}">${g.announced ? 'No final winner calculated yet. Winning square will be highlighted and labeled FINAL.' : 'Waiting for FOX matchup announcement.'}</div>
       </div>
-    </section>
-  `).join('');
+    </section>`;
+  }).join('');
 
   games.forEach((_,i) => {
     applyHomeTeamTheme(i);
@@ -803,6 +795,7 @@ function periodTotal(competitor, throughPeriod) {
 
 async function syncGameScore(i) {
   const game = games[i];
+  if (!game || !game.announced) return;
   const date = gameDateForScoreFeed(game);
   const statusEl = document.getElementById(`score-sync-${i}`);
   if (!date) return;
@@ -886,6 +879,10 @@ function matchingPlayers(i, winningNumber) {
 }
 
 function calculatePayout(i, period) {
+  if (!games[i] || !games[i].announced) {
+    alert('FOX has not announced this matchup yet.');
+    return;
+  }
   const awayInput = document.getElementById(`${period}-away-${i}`);
   const homeInput = document.getElementById(`${period}-home-${i}`);
   if (!awayInput || !homeInput || awayInput.value === '' || homeInput.value === '') {
@@ -932,6 +929,12 @@ function calculatePayout(i, period) {
 function renderPayout(i) {
   const scoreSummary = document.getElementById(`score-summary-${i}`);
   const savedHalf = state[i].halfResult;
+  if (!games[i].announced) {
+    if (scoreSummary) scoreSummary.innerHTML = `<strong>Scores:</strong> Waiting for FOX matchup announcement`;
+    const potEl = document.getElementById(`pot-${i}`);
+    if (potEl) potEl.textContent = `$${totalPot(i).toFixed(2)}`;
+    return;
+  }
   const savedFinal = state[i].finalResult;
 
   if (scoreSummary) {
@@ -1012,6 +1015,10 @@ function showBoard(i) {
 }
 
 async function openModal(gameIndex, squareIndex) {
+  if (!games[gameIndex] || !games[gameIndex].announced) {
+    alert(weekLockMessage(gameIndex));
+    return;
+  }
   if (!isWeekUnlocked(gameIndex)) {
     alert(weekLockMessage(gameIndex));
     return;
@@ -1036,7 +1043,7 @@ async function openModal(gameIndex, squareIndex) {
   const confirmPlayer = document.getElementById('confirmPlayer');
 
   if (modalGame) {
-    modalGame.textContent = `${game.awayTeam || ''}${game.awayTeam ? ' at ' : ''}${game.homeTeam || ''} • Square ${squareIndex + 1}`;
+    modalGame.textContent = `${game.away} at ${game.home} • Square ${squareIndex + 1}`;
   }
   if (confirmPlayer) {
     confirmPlayer.textContent = `Player: ${currentPlayer}`;
@@ -1134,7 +1141,7 @@ function confirmAdminReset() {
   }
 
   const game = games[activeBoard];
-  const label = `Monday Night Football Week ${game.week}`;
+  const label = `FOX Game of the Week • Week ${game.week}`;
 
   if (!confirm(`Reset only ${label}? This will clear this page's picks, names, scores, winners, payout results, and generate a new order of all 10 digits. Other game pages will not be changed.`)) {
     return;

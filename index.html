@@ -333,6 +333,31 @@
     .squares { gap:8px; grid-template-columns:repeat(2, 1fr); }
     .nav { max-height:92px; overflow:auto; justify-content:flex-start; }
   }
+
+  .season-winnings {
+    margin-top: 28px;
+    padding: 18px;
+    border-radius: 16px;
+    background: #f7f7f7;
+    border: 1px solid #d8d8d8;
+  }
+  .season-winnings h2 { margin-top: 0; }
+  .winnings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .winnings-player {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+  }
+  .winnings-player strong { display: block; margin-bottom: 5px; }
+  .winnings-amount { font-size: 1.15rem; font-weight: 800; }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -356,7 +381,7 @@
 <p class="footer-note">
   Manual picks only. A square is not assigned until a registered player taps it and confirms the pick. TBD weeks stay closed until FOX announces the featured matchup.
   One square per player per FOX Game of the Week. Unclaimed squares remain open and are never auto-assigned.
-  Every board contains the digits 0–9 exactly once. Each claimed square costs $2. There is no rollover.
+  Every board contains the digits 0–9 exactly once. Each claimed square costs $3. There is no rollover.
 </p>
 
 <div class="modal hidden" id="playerModal">
@@ -657,7 +682,7 @@ function buildBoards() {
       </div>
       <div class="payout-box">
         <h3>💵 Payout Calculator</h3>
-        <div>Each claimed square = <strong>$2</strong>. Each board uses all 10 digits from 0–9 exactly once.</div>
+        <div>Each claimed square = <strong>$3</strong>. Each board uses all 10 digits from 0–9 exactly once.</div>
         <div>Current pot: <strong id="pot-${i}">$0.00</strong></div>
         <div style="margin-top:12px;"><strong>Halftime score</strong></div>
         <div class="score-grid">
@@ -692,6 +717,7 @@ function buildBoards() {
     applyHomeTeamTheme(i);
     renderBoard(i);
   });
+  renderAccruedWinnings();
 }
 
 
@@ -868,7 +894,7 @@ function paidSquareCount(i) {
 
 function rolloverInto(i) { return 0; }
 
-function totalPot(i) { return paidSquareCount(i) * 2; }
+function totalPot(i) { return paidSquareCount(i) * 3; }
 
 function winningNumberFromScores(awayScore, homeScore) {
   return ((Math.abs(Number(awayScore)) % 10) + (Math.abs(Number(homeScore)) % 10)) % 10;
@@ -919,6 +945,7 @@ function calculatePayout(i, period) {
 
   saveState();
   renderBoard(i);
+  renderAccruedWinnings();
   if (period === 'final' && i + 1 < state.length) {
     renderBoard(i + 1);
     renderPayout(i + 1);

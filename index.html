@@ -324,6 +324,50 @@
     opacity:.45;
   }
 
+
+  .season-winnings {
+    width:min(980px, calc(100% - 28px));
+    margin:0 auto 28px;
+    padding:18px;
+    border-radius:16px;
+    background:#111016;
+    border:1px solid #4a3655;
+    box-shadow:0 12px 35px rgba(0,0,0,.25);
+  }
+  .season-winnings h2 {
+    margin:0 0 6px;
+    text-align:center;
+  }
+  .season-winnings-note {
+    text-align:center;
+    color:#c8c1ce;
+    font-size:14px;
+    margin-bottom:14px;
+  }
+  .winnings-grid {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px;
+  }
+  .winnings-player {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    padding:11px 13px;
+    border-radius:10px;
+    background:#19131f;
+    border:1px solid #3f3347;
+  }
+  .winnings-player strong { color:#fff; }
+  .winnings-amount {
+    font-weight:900;
+    white-space:nowrap;
+  }
+  @media (max-width:600px) {
+    .winnings-grid { grid-template-columns:1fr; }
+  }
+
   @media (max-width:600px) {
     main { padding-left:9px; padding-right:9px; }
     .board { padding:14px; }
@@ -333,31 +377,6 @@
     .squares { gap:8px; grid-template-columns:repeat(2, 1fr); }
     .nav { max-height:92px; overflow:auto; justify-content:flex-start; }
   }
-
-  .season-winnings {
-    margin-top: 28px;
-    padding: 18px;
-    border-radius: 16px;
-    background: #f7f7f7;
-    border: 1px solid #d8d8d8;
-  }
-  .season-winnings h2 { margin-top: 0; }
-  .winnings-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
-    gap: 10px;
-    margin-top: 14px;
-  }
-  .winnings-player {
-    background: white;
-    border: 1px solid #ddd;
-    border-radius: 12px;
-    padding: 12px;
-    text-align: center;
-  }
-  .winnings-player strong { display: block; margin-bottom: 5px; }
-  .winnings-amount { font-size: 1.15rem; font-weight: 800; }
-
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -378,11 +397,19 @@
 <div class="bottom-controls">
   <button class="control secondary" onclick="openAdminReset()">🔒 Admin Reset This Page</button>
 </div>
+
 <p class="footer-note">
   Manual picks only. A square is not assigned until a registered player taps it and confirms the pick. TBD weeks stay closed until FOX announces the featured matchup.
   One square per player per FOX Game of the Week. Unclaimed squares remain open and are never auto-assigned.
   Every board contains the digits 0–9 exactly once. Each claimed square costs $3. There is no rollover.
 </p>
+
+<section class="season-winnings" id="season-winnings">
+  <h2>💰 Player Accrued Winnings</h2>
+  <div class="season-winnings-note">Halftime + final payouts across all FOX Game of the Week boards.</div>
+  <div class="winnings-grid" id="season-winnings-grid"></div>
+</section>
+
 
 <div class="modal hidden" id="playerModal">
   <div class="dialog">
@@ -717,7 +744,6 @@ function buildBoards() {
     applyHomeTeamTheme(i);
     renderBoard(i);
   });
-  renderAccruedWinnings();
 }
 
 
@@ -799,6 +825,7 @@ function renderBoard(i) {
     ? s.players.map(p => `<div class="result-row"><span>${escapeHtml(p.name)}${p.auto ? '' : ''}</span><strong>${p.number}</strong></div>`).join('')
     : '<div class="empty">No picks yet.</div>';
   renderPayout(i);
+  renderAccruedWinnings();
 }
 
 
@@ -945,7 +972,6 @@ function calculatePayout(i, period) {
 
   saveState();
   renderBoard(i);
-  renderAccruedWinnings();
   if (period === 'final' && i + 1 < state.length) {
     renderBoard(i + 1);
     renderPayout(i + 1);
@@ -1218,6 +1244,40 @@ function clearAllPicks() {
   });
   saveState();
   games.forEach((_,i)=>renderBoard(i));
+}
+
+
+function getAccruedWinnings() {
+  const totals = Object.fromEntries(ALLOWED_PLAYERS.map(name => [name, 0]));
+
+  state.forEach(s => {
+    ['halfResult', 'finalResult'].forEach(key => {
+      const result = s && s[key];
+      if (!result || !Array.isArray(result.winners) || !result.winners.length) return;
+
+      const payoutEach = Number(result.payoutEach || 0);
+      result.winners.forEach(name => {
+        if (Object.prototype.hasOwnProperty.call(totals, name)) {
+          totals[name] += payoutEach;
+        }
+      });
+    });
+  });
+
+  return totals;
+}
+
+function renderAccruedWinnings() {
+  const grid = document.getElementById('season-winnings-grid');
+  if (!grid) return;
+
+  const totals = getAccruedWinnings();
+  grid.innerHTML = ALLOWED_PLAYERS.map(name => `
+    <div class="winnings-player">
+      <strong>${escapeHtml(name)}</strong>
+      <span class="winnings-amount">$${Number(totals[name] || 0).toFixed(2)}</span>
+    </div>
+  `).join('');
 }
 
 function escapeHtml(s) {

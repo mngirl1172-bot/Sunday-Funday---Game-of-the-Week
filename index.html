@@ -377,37 +377,6 @@
     .squares { gap:8px; grid-template-columns:repeat(2, 1fr); }
     .nav { max-height:92px; overflow:auto; justify-content:flex-start; }
   }
-
-  .accrued-table-wrap {
-    margin-top: 18px;
-    overflow-x: auto;
-  }
-  .accrued-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: rgba(255,255,255,.04);
-    border-radius: 12px;
-    overflow: hidden;
-  }
-  .accrued-table th,
-  .accrued-table td {
-    padding: 12px 14px;
-    border-bottom: 1px solid rgba(255,255,255,.1);
-    text-align: left;
-  }
-  .accrued-table th:last-child,
-  .accrued-table td:last-child {
-    text-align: right;
-  }
-  .accrued-table th {
-    background: rgba(255,255,255,.08);
-  }
-  .accrued-note {
-    margin-top: 8px;
-    color: #c7bfce;
-    font-size: 14px;
-  }
-
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -425,13 +394,13 @@
 
 <main id="boards"></main>
 
-<div class="bottom-controls">
-  
 <section class="season-winnings" id="season-winnings">
   <h2>💰 Player Accrued Winnings</h2>
   <div class="season-winnings-note">One winner at halftime receives 50% of the pot. One winner at final receives the remaining 50%. No rollover. All winnings accrue during the season and are paid at the end of the season.</div>
   <div class="winnings-grid" id="season-winnings-grid"></div>
 </section>
+
+<div class="bottom-controls">
 <button class="control secondary" onclick="openAdminReset()">🔒 Admin Reset This Page</button>
 </div>
 

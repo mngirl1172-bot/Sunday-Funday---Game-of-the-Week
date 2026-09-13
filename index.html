@@ -377,6 +377,28 @@
     .squares { gap:8px; grid-template-columns:repeat(2, 1fr); }
     .nav { max-height:92px; overflow:auto; justify-content:flex-start; }
   }
+
+  .auto-assign-banner {
+    width:min(900px, calc(100% - 28px));
+    margin:12px auto 6px;
+    padding:12px 16px;
+    border-radius:12px;
+    background:#241b2c;
+    border:1px solid #7d45a8;
+    text-align:center;
+    font-size:15px;
+    line-height:1.45;
+  }
+  .auto-assign-note {
+    margin:10px 0 16px;
+    padding:10px 12px;
+    border-radius:10px;
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.14);
+    font-size:14px;
+    line-height:1.45;
+  }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -385,6 +407,10 @@
 <header>
   <h1>🦊🏈 FOX Game of the Week Pick a Square!</h1>
   <p class="subtitle">Pick one square for each FOX Game of the Week. Every board has all 10 digits (0–9), used once. If FOX has not announced the featured game yet, that week will show a placeholder, but picks can still open on Monday after the previous week's game. Winning numbers are based on halftime and final score digits.</p>
+
+  <div class="auto-assign-banner">
+    ⏰ <strong>Automatic Number Assignment:</strong> If you have not picked a square by <strong>30 minutes before kickoff</strong>, the board will randomly assign you one of the remaining numbers.
+  </div>
   <div class="identity-bar">
     <span>You are: <strong id="currentPlayerName">Not registered</strong></span>
     <button onclick="openPlayerRegistration()">Change player</button>
@@ -598,7 +624,6 @@ function defaultState() {
     picked: Array(10).fill(false),
     players: [],
     autoAssigned: false,
-    rolloverIn: 0,
     halfResult: null,
     finalResult: null
   }));
@@ -638,7 +663,6 @@ state.forEach((s, gameIndex) => {
     result.pot = periodPot;
     result.totalPot = totalPot(gameIndex);
     result.payoutEach = Array.isArray(result.winners) && result.winners.length ? periodPot : 0;
-    result.rolloverOut = 0;
   });
 });
 saveState();
@@ -712,91 +736,6 @@ function weekLockMessage(i) {
 }
 
 
-function autoAssignCutoffPassed(i) {
-  const game = games[i];
-  if (!game || !game.kickoff) return false;
-
-  const kickoff = new Date(game.kickoff);
-  if (Number.isNaN(kickoff.getTime())) return false;
-
-  const cutoff = new Date(kickoff.getTime() - (30 * 60 * 1000));
-  return new Date() >= cutoff;
-}
-
-function remainingPlayersForGame(i) {
-  const pickedNames = new Set(
-    (state[i]?.picks || [])
-      .filter(Boolean)
-      .map(p => p.player_name || p.name)
-      .filter(Boolean)
-  );
-  return ALLOWED_PLAYERS.filter(name => !pickedNames.has(name));
-}
-
-function remainingSquareIndexesForGame(i) {
-  const picks = state[i]?.picks || [];
-  const remaining = [];
-  for (let idx = 0; idx < 10; idx++) {
-    if (!picks[idx]) remaining.push(idx);
-  }
-  return remaining;
-}
-
-async function autoAssignMissingPlayers(i) {
-  const game = games[i];
-  if (!game || !game.announced || !game.kickoff) return;
-  if (!isWeekUnlocked(i)) return;
-  if (!autoAssignCutoffPassed(i)) return;
-
-  const missingPlayers = remainingPlayersForGame(i);
-  const openSquares = remainingSquareIndexesForGame(i);
-
-  if (!missingPlayers.length || !openSquares.length) return;
-
-  // Shuffle available squares so assignments are random.
-  for (let j = openSquares.length - 1; j > 0; j--) {
-    const k = Math.floor(Math.random() * (j + 1));
-    [openSquares[j], openSquares[k]] = [openSquares[k], openSquares[j]];
-  }
-
-  for (let n = 0; n < missingPlayers.length && n < openSquares.length; n++) {
-    const playerName = missingPlayers[n];
-    const squareIndex = openSquares[n];
-    const number = boardNumbers[i][squareIndex];
-
-    // Skip if another client filled it while this loop was running.
-    if (state[i]?.picks?.[squareIndex]) continue;
-
-    const pick = {
-      game_index: i,
-      square_index: squareIndex,
-      player_name: playerName,
-      number,
-      auto_assigned: true
-    };
-
-    try {
-      if (supabaseClient) {
-        const { error } = await supabaseClient
-          .from(PICKS_TABLE)
-          .insert(pick);
-        if (error) {
-          console.warn('Auto-assign insert failed:', error.message);
-          continue;
-        }
-      }
-
-      state[i].picks[squareIndex] = pick;
-    } catch (err) {
-      console.warn('Auto-assign failed:', err);
-    }
-  }
-
-  saveState();
-  renderBoard(i);
-  renderAccruedWinnings();
-}
-
 function buildBoards() {
   const boards = document.getElementById('boards');
   boards.innerHTML = games.map((g,i) => {
@@ -812,6 +751,9 @@ function buildBoards() {
       <div class="game-number">FOX Game of the Week • Week ${g.week}</div>
       <h2 class="game-title">${matchup}</h2>
       <div class="game-meta">${meta}</div>
+      <div class="auto-assign-note">
+        ⏰ Pick your square before kickoff. Anyone who has not picked by <strong>30 minutes before game time</strong> will be randomly assigned one of the remaining numbers.
+      </div>
       <div class="week-lock-banner" id="week-lock-${i}" style="display:none;"></div>
       <div class="score-summary" id="score-summary-${i}">
         <strong>Scores:</strong> ${g.announced ? 'Not entered yet' : 'Waiting for FOX matchup announcement'}
@@ -830,7 +772,7 @@ function buildBoards() {
         add those two digits together, then use the last digit of that total as the winning number.
         <div class="winner-example">
           Example: Away 17, Home 13 → 7 + 3 = 10 → winning number is <strong>0</strong>.<br>
-          <strong>💰 No Rollover:</strong> If there is no matching claimed number, there is no payout for that result.
+          If there is no matching claimed number, there is no payout for that result.
         </div>
       </div>
       <div class="payout-box">
@@ -1088,8 +1030,6 @@ function paidSquareCount(i) {
   return state[i].picked.filter(Boolean).length;
 }
 
-function rolloverInto(i) { return 0; }
-
 function totalPot(i) { return paidSquareCount(i) * 3; }
 
 function winningNumberFromScores(awayScore, homeScore) {
@@ -1127,7 +1067,6 @@ function calculatePayout(i, period) {
         payoutEach: periodPot,
         pot: periodPot,
         totalPot: totalPotAmount,
-        rolloverOut: 0
       }
     : {
         awayScore, homeScore, winningNumber,
@@ -1135,7 +1074,6 @@ function calculatePayout(i, period) {
         payoutEach: 0,
         pot: periodPot,
         totalPot: totalPotAmount,
-        rolloverOut: 0
       };
 
   if (period === 'half') state[i].halfResult = result;
@@ -1178,9 +1116,7 @@ function renderPayout(i) {
   }
 
   const potEl = document.getElementById(`pot-${i}`);
-  const rollEl = document.getElementById(`rollover-in-${i}`);
   if (potEl) potEl.textContent = `$${totalPot(i).toFixed(2)}`;
-  if (rollEl) rollEl.textContent = `$${rolloverInto(i).toFixed(2)}`;
 
   const half = state[i].halfResult;
   const final = state[i].finalResult;
@@ -1241,10 +1177,7 @@ function showBoard(i) {
 }
 
 async function openModal(gameIndex, squareIndex) {
-  if (!games[gameIndex] || !games[gameIndex].announced) {
-    alert(weekLockMessage(gameIndex));
-    return;
-  }
+  if (!games[gameIndex]) return;
   if (!isWeekUnlocked(gameIndex)) {
     alert(weekLockMessage(gameIndex));
     return;
@@ -1269,7 +1202,7 @@ async function openModal(gameIndex, squareIndex) {
   const confirmPlayer = document.getElementById('confirmPlayer');
 
   if (modalGame) {
-    modalGame.textContent = `${game.away} at ${game.home} • Square ${squareIndex + 1}`;
+    modalGame.textContent = game.announced ? `${game.away} at ${game.home} • Square ${squareIndex + 1}` : `FOX Game of the Week — TBD • Square ${squareIndex + 1}`;
   }
   if (confirmPlayer) {
     confirmPlayer.textContent = `Player: ${currentPlayer}`;
@@ -1337,9 +1270,79 @@ function hasKickedOff(gameIndex) {
   return kickoff ? Date.now() >= new Date(kickoff).getTime() : false;
 }
 
+function autoAssignCutoffTime(gameIndex) {
+  const game = games[gameIndex];
+  if (!game || !game.kickoff) return null;
+
+  const kickoffMs = new Date(game.kickoff).getTime();
+  if (!Number.isFinite(kickoffMs)) return null;
+
+  return kickoffMs - (30 * 60 * 1000);
+}
+
+function autoAssignDue(gameIndex) {
+  const cutoff = autoAssignCutoffTime(gameIndex);
+  return cutoff !== null && Date.now() >= cutoff;
+}
+
 async function autoAssignIfNeeded(gameIndex) {
-  // Manual-only board: never assign a square automatically.
-  return;
+  const game = games[gameIndex];
+
+  // Auto-assignment can only run once FOX has supplied a kickoff time.
+  if (!game || !game.announced || !game.kickoff) return;
+  if (!isWeekUnlocked(gameIndex)) return;
+  if (!autoAssignDue(gameIndex)) return;
+
+  // Refresh from Supabase first so we do not overwrite another person's pick.
+  await loadSharedPicks();
+
+  const s = state[gameIndex];
+  if (!s) return;
+
+  const pickedNames = new Set(
+    s.players.map(p => String(p.name || '').toLowerCase())
+  );
+
+  const missingPlayers = ALLOWED_PLAYERS.filter(
+    name => !pickedNames.has(name.toLowerCase())
+  );
+
+  const openSquares = s.picked
+    .map((isPicked, squareIndex) => isPicked ? null : squareIndex)
+    .filter(squareIndex => squareIndex !== null);
+
+  if (!missingPlayers.length || !openSquares.length) return;
+
+  // Randomize the remaining squares before assigning them.
+  for (let j = openSquares.length - 1; j > 0; j--) {
+    const k = Math.floor(Math.random() * (j + 1));
+    [openSquares[j], openSquares[k]] = [openSquares[k], openSquares[j]];
+  }
+
+  for (let n = 0; n < missingPlayers.length && n < openSquares.length; n++) {
+    const playerName = missingPlayers[n];
+    const squareIndex = openSquares[n];
+    const number = s.numbers[squareIndex];
+
+    try {
+      await saveSharedPick(gameIndex, squareIndex, playerName, number, true);
+
+      s.picked[squareIndex] = true;
+      s.players.push({
+        name: playerName,
+        number,
+        squareIndex,
+        auto: true
+      });
+    } catch (err) {
+      // Another device may have filled the player/square first.
+      console.warn('Auto-assignment skipped:', err);
+      await loadSharedPicks();
+    }
+  }
+
+  saveState();
+  renderBoard(gameIndex);
 }
 
 document.getElementById('modal').addEventListener('click', e => {
@@ -1378,7 +1381,6 @@ function confirmAdminReset() {
     picked: Array(10).fill(false),
     players: [],
     autoAssigned: false,
-    rolloverIn: 0,
     halfResult: null,
     finalResult: null
   };
@@ -1401,7 +1403,6 @@ function newAllBoards() {
     picked: Array(10).fill(false),
     players: [],
     autoAssigned: false,
-    rolloverIn: 0,
     halfResult: null,
     finalResult: null
   }));
@@ -1480,10 +1481,11 @@ loadSharedPicks().then(() => {
 setInterval(syncRelevantScores, 30000);
 
 setInterval(() => {
-  games.forEach((_, i) => autoAssignMissingPlayers(i));
+  games.forEach((_, i) => autoAssignIfNeeded(i));
 }, 60000);
 
-games.forEach((_, i) => autoAssignMissingPlayers(i));
+games.forEach((_, i) => autoAssignIfNeeded(i));
+
 
 setTimeout(syncRelevantScores, 1200);
 </script>

@@ -405,8 +405,8 @@
 </div>
 
 <p class="footer-note">
-  Manual picks only. A square is not assigned until a registered player taps it and confirms the pick. TBD weeks can open for picks on Monday after the previous week's game, even before FOX announces the featured matchup.
-  One square per player per FOX Game of the Week. Unclaimed squares remain open and are never auto-assigned.
+  Players may pick manually until 30 minutes before kickoff. At that point, anyone who has not picked is automatically assigned one of the remaining numbers. TBD weeks can open for picks on Monday after the previous week's game, even before FOX announces the featured matchup.
+  One square per player per FOX Game of the Week. Unclaimed players are automatically assigned a remaining number 30 minutes before kickoff.
   Every board contains the digits 0–9 exactly once. Each claimed square costs $3. There is no rollover.
 </p>
 
@@ -709,6 +709,92 @@ function weekLockMessage(i) {
   if (!unlock) return '🔒 This week is not open for picks yet.';
 
   return `🔒 Picks open Monday, ${unlock.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}, after the previous week's game. The matchup may still show TBD until FOX announces it.`;
+}
+
+
+function autoAssignCutoffPassed(i) {
+  const game = games[i];
+  if (!game || !game.kickoff) return false;
+
+  const kickoff = new Date(game.kickoff);
+  if (Number.isNaN(kickoff.getTime())) return false;
+
+  const cutoff = new Date(kickoff.getTime() - (30 * 60 * 1000));
+  return new Date() >= cutoff;
+}
+
+function remainingPlayersForGame(i) {
+  const pickedNames = new Set(
+    (state[i]?.picks || [])
+      .filter(Boolean)
+      .map(p => p.player_name || p.name)
+      .filter(Boolean)
+  );
+  return ALLOWED_PLAYERS.filter(name => !pickedNames.has(name));
+}
+
+function remainingSquareIndexesForGame(i) {
+  const picks = state[i]?.picks || [];
+  const remaining = [];
+  for (let idx = 0; idx < 10; idx++) {
+    if (!picks[idx]) remaining.push(idx);
+  }
+  return remaining;
+}
+
+async function autoAssignMissingPlayers(i) {
+  const game = games[i];
+  if (!game || !game.announced || !game.kickoff) return;
+  if (!isWeekUnlocked(i)) return;
+  if (!autoAssignCutoffPassed(i)) return;
+
+  const missingPlayers = remainingPlayersForGame(i);
+  const openSquares = remainingSquareIndexesForGame(i);
+
+  if (!missingPlayers.length || !openSquares.length) return;
+
+  // Shuffle available squares so assignments are random.
+  for (let j = openSquares.length - 1; j > 0; j--) {
+    const k = Math.floor(Math.random() * (j + 1));
+    [openSquares[j], openSquares[k]] = [openSquares[k], openSquares[j]];
+  }
+
+  for (let n = 0; n < missingPlayers.length && n < openSquares.length; n++) {
+    const playerName = missingPlayers[n];
+    const squareIndex = openSquares[n];
+    const number = boardNumbers[i][squareIndex];
+
+    // Skip if another client filled it while this loop was running.
+    if (state[i]?.picks?.[squareIndex]) continue;
+
+    const pick = {
+      game_index: i,
+      square_index: squareIndex,
+      player_name: playerName,
+      number,
+      auto_assigned: true
+    };
+
+    try {
+      if (supabaseClient) {
+        const { error } = await supabaseClient
+          .from(PICKS_TABLE)
+          .insert(pick);
+        if (error) {
+          console.warn('Auto-assign insert failed:', error.message);
+          continue;
+        }
+      }
+
+      state[i].picks[squareIndex] = pick;
+    } catch (err) {
+      console.warn('Auto-assign failed:', err);
+    }
+  }
+
+  saveState();
+  renderBoard(i);
+  renderAccruedWinnings();
 }
 
 function buildBoards() {
@@ -1392,6 +1478,13 @@ loadSharedPicks().then(() => {
   syncRelevantScores();
 });
 setInterval(syncRelevantScores, 30000);
+
+setInterval(() => {
+  games.forEach((_, i) => autoAssignMissingPlayers(i));
+}, 60000);
+
+games.forEach((_, i) => autoAssignMissingPlayers(i));
+
 setTimeout(syncRelevantScores, 1200);
 </script>
 </body>

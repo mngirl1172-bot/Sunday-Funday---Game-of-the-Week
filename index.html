@@ -426,7 +426,13 @@
 <main id="boards"></main>
 
 <div class="bottom-controls">
-  <button class="control secondary" onclick="openAdminReset()">🔒 Admin Reset This Page</button>
+  
+<section class="season-winnings" id="season-winnings">
+  <h2>💰 Player Accrued Winnings</h2>
+  <div class="season-winnings-note">One winner at halftime receives 50% of the pot. One winner at final receives the remaining 50%. No rollover. All winnings accrue during the season and are paid at the end of the season.</div>
+  <div class="winnings-grid" id="season-winnings-grid"></div>
+</section>
+<button class="control secondary" onclick="openAdminReset()">🔒 Admin Reset This Page</button>
 </div>
 
 <p class="footer-note">
@@ -435,11 +441,7 @@
   Every board contains the digits 0–9 exactly once. Each claimed square costs $3. There is no rollover.
 </p>
 
-<section class="season-winnings" id="season-winnings">
-  <h2>💰 Player Accrued Winnings</h2>
-  <div class="season-winnings-note">One winner at halftime receives 50% of the pot. One winner at final receives the remaining 50%. No rollover. All winnings accrue during the season and are paid at the end of the season.</div>
-  <div class="winnings-grid" id="season-winnings-grid"></div>
-</section>
+
 
 
 <div class="modal hidden" id="playerModal">
@@ -874,7 +876,6 @@ function renderBoard(i) {
     : '<div class="empty">No picks yet.</div>';
   renderPayout(i);
   renderAccruedWinnings();
-  renderAccruedWinnersTable();
 }
 
 
@@ -1370,18 +1371,6 @@ function getAccruedWinnings() {
 }
 
 
-function renderAccruedWinnersTable() {
-  const body = document.getElementById('accrued-winners-table-body');
-  if (!body) return;
-
-  const totals = getAccruedWinnings();
-  body.innerHTML = ALLOWED_PLAYERS.map(name => `
-    <tr>
-      <td><strong>${escapeHtml(name)}</strong></td>
-      <td>$${Number(totals[name] || 0).toFixed(2)}</td>
-    </tr>
-  `).join('');
-}
 
 function renderAccruedWinnings() {
   const grid = document.getElementById('season-winnings-grid');
@@ -1415,22 +1404,5 @@ loadSharedPicks().then(() => {
 setInterval(syncRelevantScores, 30000);
 setTimeout(syncRelevantScores, 1200);
 </script>
-
-<section class="season-winnings" id="accrued-winners-table-section">
-  <h2>🏆 Accrued Winners — Paid at End of Season</h2>
-  <div class="accrued-table-wrap">
-    <table class="accrued-table">
-      <thead>
-        <tr>
-          <th>Player</th>
-          <th>Accrued Winnings</th>
-        </tr>
-      </thead>
-      <tbody id="accrued-winners-table-body"></tbody>
-    </table>
-  </div>
-  <div class="accrued-note">These winnings are tracked throughout the season and are not paid out until the season ends.</div>
-</section>
-
 </body>
 </html>

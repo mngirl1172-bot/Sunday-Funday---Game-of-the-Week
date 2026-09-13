@@ -384,7 +384,7 @@
 
 <header>
   <h1>🦊🏈 FOX Game of the Week Pick a Square!</h1>
-  <p class="subtitle">Pick one square for each FOX Game of the Week. Every board has all 10 digits (0–9), used once. If FOX has not announced the featured game yet, that week will show a placeholder and remain closed until the matchup is announced. Winning numbers are based on halftime and final score digits.</p>
+  <p class="subtitle">Pick one square for each FOX Game of the Week. Every board has all 10 digits (0–9), used once. If FOX has not announced the featured game yet, that week will show a placeholder, but picks can still open on Monday after the previous week's game. Winning numbers are based on halftime and final score digits.</p>
   <div class="identity-bar">
     <span>You are: <strong id="currentPlayerName">Not registered</strong></span>
     <button onclick="openPlayerRegistration()">Change player</button>
@@ -405,7 +405,7 @@
 </div>
 
 <p class="footer-note">
-  Manual picks only. A square is not assigned until a registered player taps it and confirms the pick. TBD weeks stay closed until FOX announces the featured matchup.
+  Manual picks only. A square is not assigned until a registered player taps it and confirms the pick. TBD weeks can open for picks on Monday after the previous week's game, even before FOX announces the featured matchup.
   One square per player per FOX Game of the Week. Unclaimed squares remain open and are never auto-assigned.
   Every board contains the digits 0–9 exactly once. Each claimed square costs $3. There is no rollover.
 </p>
@@ -671,23 +671,44 @@ function previousAnnouncedIndex(i) {
   return -1;
 }
 
+function mondayUnlockDateForWeek(i) {
+  if (i <= 0) return null;
+
+  const prev = games[i - 1];
+  if (!prev || !prev.date) return null;
+
+  // Use the previous week's listed game date. The next board opens
+  // on the first Monday after that game, even when the next matchup is TBD.
+  const gameDate = new Date(`${prev.date}, 2026 12:00:00`);
+  if (Number.isNaN(gameDate.getTime())) return null;
+
+  const unlock = new Date(gameDate);
+  unlock.setHours(0, 0, 0, 0);
+
+  do {
+    unlock.setDate(unlock.getDate() + 1);
+  } while (unlock.getDay() !== 1);
+
+  return unlock;
+}
+
 function isWeekUnlocked(i) {
-  const game = games[i];
-  if (!game || !game.announced) return false;
-  const prev = previousAnnouncedIndex(i);
-  if (prev === -1) return true;
-  return Boolean(state[prev] && state[prev].finalResult);
+  if (i === 0) return true;
+
+  const unlock = mondayUnlockDateForWeek(i);
+  if (!unlock) return false;
+
+  const now = new Date();
+  return now >= unlock;
 }
 
 function weekLockMessage(i) {
-  const game = games[i];
-  if (!game || !game.announced) {
-    return `⏳ FOX has not announced the featured Game of the Week for Week ${game ? game.week : i + 1} yet. This board will remain closed until the matchup is announced.`;
-  }
-  const prevIndex = previousAnnouncedIndex(i);
-  if (prevIndex === -1) return '';
-  const prev = games[prevIndex];
-  return `🔒 Locked until the previous announced FOX Game of the Week (Week ${prev.week}) has ended and its final score is recorded.`;
+  if (i === 0) return '';
+
+  const unlock = mondayUnlockDateForWeek(i);
+  if (!unlock) return '🔒 This week is not open for picks yet.';
+
+  return `🔒 Picks open Monday, ${unlock.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}, after the previous week's game. The matchup may still show TBD until FOX announces it.`;
 }
 
 function buildBoards() {

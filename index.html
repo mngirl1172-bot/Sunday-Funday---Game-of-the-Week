@@ -377,6 +377,37 @@
     .squares { gap:8px; grid-template-columns:repeat(2, 1fr); }
     .nav { max-height:92px; overflow:auto; justify-content:flex-start; }
   }
+
+  .accrued-table-wrap {
+    margin-top: 18px;
+    overflow-x: auto;
+  }
+  .accrued-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(255,255,255,.04);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .accrued-table th,
+  .accrued-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+    text-align: left;
+  }
+  .accrued-table th:last-child,
+  .accrued-table td:last-child {
+    text-align: right;
+  }
+  .accrued-table th {
+    background: rgba(255,255,255,.08);
+  }
+  .accrued-note {
+    margin-top: 8px;
+    color: #c7bfce;
+    font-size: 14px;
+  }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -406,7 +437,7 @@
 
 <section class="season-winnings" id="season-winnings">
   <h2>💰 Player Accrued Winnings</h2>
-  <div class="season-winnings-note">Halftime + final payouts across all FOX Game of the Week boards.</div>
+  <div class="season-winnings-note">One winner at halftime receives 50% of the pot. One winner at final receives the remaining 50%. No rollover. All winnings accrue during the season and are paid at the end of the season.</div>
   <div class="winnings-grid" id="season-winnings-grid"></div>
 </section>
 
@@ -826,6 +857,7 @@ function renderBoard(i) {
     : '<div class="empty">No picks yet.</div>';
   renderPayout(i);
   renderAccruedWinnings();
+  renderAccruedWinnersTable();
 }
 
 
@@ -990,21 +1022,25 @@ function calculatePayout(i, period) {
   const homeScore = Number(homeInput.value);
   const winningNumber = winningNumberFromScores(awayScore, homeScore);
   const matches = matchingPlayers(i, winningNumber);
-  const pot = totalPot(i);
+  const winner = matches.length ? matches[0] : null;
+  const totalPotAmount = totalPot(i);
+  const periodPot = totalPotAmount / 2;
 
-  const result = matches.length
+  const result = winner
     ? {
         awayScore, homeScore, winningNumber,
-        winners: matches.map(p => p.name),
-        payoutEach: pot / matches.length,
-        pot,
+        winners: [winner.name],
+        payoutEach: periodPot,
+        pot: periodPot,
+        totalPot: totalPotAmount,
         rolloverOut: 0
       }
     : {
         awayScore, homeScore, winningNumber,
         winners: [],
         payoutEach: 0,
-        pot,
+        pot: periodPot,
+        totalPot: totalPotAmount,
         rolloverOut: 0
       };
 
@@ -1310,6 +1346,20 @@ function getAccruedWinnings() {
   return totals;
 }
 
+
+function renderAccruedWinnersTable() {
+  const body = document.getElementById('accrued-winners-table-body');
+  if (!body) return;
+
+  const totals = getAccruedWinnings();
+  body.innerHTML = ALLOWED_PLAYERS.map(name => `
+    <tr>
+      <td><strong>${escapeHtml(name)}</strong></td>
+      <td>$${Number(totals[name] || 0).toFixed(2)}</td>
+    </tr>
+  `).join('');
+}
+
 function renderAccruedWinnings() {
   const grid = document.getElementById('season-winnings-grid');
   if (!grid) return;
@@ -1342,5 +1392,22 @@ loadSharedPicks().then(() => {
 setInterval(syncRelevantScores, 30000);
 setTimeout(syncRelevantScores, 1200);
 </script>
+
+<section class="season-winnings" id="accrued-winners-table-section">
+  <h2>🏆 Accrued Winners — Paid at End of Season</h2>
+  <div class="accrued-table-wrap">
+    <table class="accrued-table">
+      <thead>
+        <tr>
+          <th>Player</th>
+          <th>Accrued Winnings</th>
+        </tr>
+      </thead>
+      <tbody id="accrued-winners-table-body"></tbody>
+    </table>
+  </div>
+  <div class="accrued-note">These winnings are tracked throughout the season and are not paid out until the season ends.</div>
+</section>
+
 </body>
 </html>

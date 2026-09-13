@@ -849,18 +849,28 @@ function periodTotal(competitor, throughPeriod) {
 async function syncGameScore(i) {
   const game = games[i];
   if (!game || !game.announced) return;
+
   const date = gameDateForScoreFeed(game);
   const statusEl = document.getElementById(`score-sync-${i}`);
+  const summaryEl = document.getElementById(`score-summary-${i}`);
   if (!date) return;
 
   try {
-    const response = await fetch(`${SCORE_FEED_URL}?dates=${date}`);
+    const response = await fetch(`${SCORE_FEED_URL}?dates=${date}&limit=100`, { cache: 'no-store' });
     if (!response.ok) throw new Error(`score service ${response.status}`);
+
     const data = await response.json();
     const event = (data.events || []).find(ev => {
       const competitors = ev?.competitions?.[0]?.competitors || [];
-      const abbrs = competitors.map(c => c?.team?.abbreviation);
-      return abbrs.includes(game.awayAbbr) && abbrs.includes(game.homeAbbr);
+      const abbrs = competitors.map(c => String(c?.team?.abbreviation || '').toUpperCase());
+
+      const awayCandidates = [game.awayAbbr, game.away === 'Washington Commanders' ? 'WSH' : '', game.away === 'Washington Commanders' ? 'WAS' : '']
+        .filter(Boolean).map(x => String(x).toUpperCase());
+      const homeCandidates = [game.homeAbbr, game.home === 'Washington Commanders' ? 'WSH' : '', game.home === 'Washington Commanders' ? 'WAS' : '']
+        .filter(Boolean).map(x => String(x).toUpperCase());
+
+      return awayCandidates.some(a => abbrs.includes(a)) &&
+             homeCandidates.some(h => abbrs.includes(h));
     });
 
     if (!event) {
@@ -868,14 +878,46 @@ async function syncGameScore(i) {
       return;
     }
 
-    const competition = event.competitions[0];
-    const away = competition.competitors.find(c => c.homeAway === 'away');
-    const home = competition.competitors.find(c => c.homeAway === 'home');
+    const competition = event.competitions?.[0];
+    const away = competition?.competitors?.find(c => c.homeAway === 'away');
+    const home = competition?.competitors?.find(c => c.homeAway === 'home');
+
+    const awayScore = Number(away?.score ?? 0);
+    const homeScore = Number(home?.score ?? 0);
     const period = Number(event.status?.period || 0);
     const completed = Boolean(event.status?.type?.completed);
+    const stateName = String(event.status?.type?.state || '').toLowerCase();
+    const detail = event.status?.type?.shortDetail ||
+                   event.status?.type?.detail ||
+                   event.status?.type?.description ||
+                   '';
+
+    if (summaryEl) {
+      if (completed) {
+        summaryEl.innerHTML =
+          `<div class="score-line">FINAL: ${game.away} ${awayScore} — ${game.home} ${homeScore}</div>`;
+      } else if (stateName === 'in' || period > 0) {
+        summaryEl.innerHTML =
+          `<div class="score-line">LIVE: ${game.away} ${awayScore} — ${game.home} ${homeScore}</div>
+           <div class="score-line">${detail || `Quarter ${period}`}</div>`;
+      } else {
+        summaryEl.innerHTML =
+          `<div class="score-line">${game.away} 0 — ${game.home} 0</div>
+           <div class="score-line">${detail || 'Game has not started'}</div>`;
+      }
+    }
+
     let changed = false;
 
-    if (period >= 3 && away?.linescores?.length >= 2 && home?.linescores?.length >= 2 && !state[i].halfResult) {
+    const awayLines = away?.linescores || [];
+    const homeLines = home?.linescores || [];
+    const hasTwoPeriods = awayLines.length >= 2 && homeLines.length >= 2;
+    const halftimeOrLater =
+      (period >= 3) ||
+      /half/i.test(detail) ||
+      (period === 2 && /0:00/.test(detail));
+
+    if (halftimeOrLater && hasTwoPeriods && !state[i].halfResult) {
       const av = document.getElementById(`half-away-${i}`);
       const hv = document.getElementById(`half-home-${i}`);
       if (av) av.value = periodTotal(away, 2);
@@ -887,16 +929,17 @@ async function syncGameScore(i) {
     if (completed && !state[i].finalResult) {
       const av = document.getElementById(`final-away-${i}`);
       const hv = document.getElementById(`final-home-${i}`);
-      if (av) av.value = Number(away?.score || 0);
-      if (hv) hv.value = Number(home?.score || 0);
+      if (av) av.value = awayScore;
+      if (hv) hv.value = homeScore;
       calculatePayout(i, 'final');
       changed = true;
     }
 
     if (statusEl) {
-      const detail = event.status?.type?.shortDetail || event.status?.type?.description || 'game found';
-      statusEl.textContent = `Live score sync: ${detail} • checked ${new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
+      statusEl.textContent =
+        `Live score sync: ${detail || 'game found'} • updated ${new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit', second:'2-digit'})}`;
     }
+
     if (changed) renderBoard(i);
   } catch (err) {
     if (statusEl) statusEl.textContent = 'Live score sync temporarily unavailable — manual score entry still works';
@@ -1296,7 +1339,7 @@ loadSharedPicks().then(() => {
   subscribeSharedPicks();
   syncRelevantScores();
 });
-setInterval(syncRelevantScores, 60000);
+setInterval(syncRelevantScores, 30000);
 setTimeout(syncRelevantScores, 1200);
 </script>
 </body>

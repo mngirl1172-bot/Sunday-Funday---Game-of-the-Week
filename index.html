@@ -654,7 +654,24 @@ function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
+
 let state = loadSavedState();
+
+// Correct any older saved payout values from previous versions.
+// Each completed period is always worth exactly 50% of that game's pot.
+state.forEach((s, gameIndex) => {
+  ['halfResult', 'finalResult'].forEach(key => {
+    const result = s && s[key];
+    if (!result) return;
+    const periodPot = totalPot(gameIndex) / 2;
+    result.pot = periodPot;
+    result.totalPot = totalPot(gameIndex);
+    result.payoutEach = Array.isArray(result.winners) && result.winners.length ? periodPot : 0;
+    result.rolloverOut = 0;
+  });
+});
+saveState();
+
 let selected = null;
 const ACTIVE_BOARD_KEY = "fox-gotw-active-board-v1";
 let activeBoard = Number(localStorage.getItem(ACTIVE_BOARD_KEY) || 0);
@@ -1096,7 +1113,7 @@ function renderPayout(i) {
     const halfWinnerEl = document.getElementById(`half-winner-${i}`);
     if (halfEl) {
       const detail = half.winners.length
-        ? `Winner${half.winners.length > 1 ? 's' : ''}: <strong>${half.winners.map(escapeHtml).join(', ')}</strong><br>Payout: <strong>$${half.payoutEach.toFixed(2)}${half.winners.length > 1 ? ' each' : ''}</strong>`
+        ? `Winner${half.winners.length > 1 ? 's' : ''}: <strong>${half.winners.map(escapeHtml).join(', ')}</strong><br>Payout: <strong>$${correctPeriodPayout(i, half).toFixed(2)}${half.winners.length > 1 ? ' each' : ''}</strong>`
         : `No matching claimed number. <strong>No payout.</strong>`;
       halfEl.innerHTML = `Winning number: <strong>${half.winningNumber}</strong><br>${detail}`;
     }
@@ -1104,7 +1121,7 @@ function renderPayout(i) {
       halfWinnerEl.innerHTML = half.winners.length
         ? `<div class="big-winner">${half.winners.map(escapeHtml).join(', ')}</div>
            Winning number: <strong>${half.winningNumber}</strong><br>
-           Payout: <strong>$${half.payoutEach.toFixed(2)}${half.winners.length > 1 ? ' each' : ''}</strong>`
+           Payout: <strong>$${correctPeriodPayout(i, half).toFixed(2)}${half.winners.length > 1 ? ' each' : ''}</strong>`
         : `No halftime winner for number <strong>${half.winningNumber}</strong>.<br><strong>No payout.</strong>`;
     }
     const hv = document.getElementById(`half-away-${i}`);
@@ -1118,7 +1135,7 @@ function renderPayout(i) {
     const finalWinnerEl = document.getElementById(`final-winner-${i}`);
     if (finalEl) {
       const detail = final.winners.length
-        ? `Winner${final.winners.length > 1 ? 's' : ''}: <strong>${final.winners.map(escapeHtml).join(', ')}</strong><br>Payout: <strong>$${final.payoutEach.toFixed(2)}${final.winners.length > 1 ? ' each' : ''}</strong>`
+        ? `Winner${final.winners.length > 1 ? 's' : ''}: <strong>${final.winners.map(escapeHtml).join(', ')}</strong><br>Payout: <strong>$${correctPeriodPayout(i, final).toFixed(2)}${final.winners.length > 1 ? ' each' : ''}</strong>`
         : `No matching claimed number. <strong>No payout.</strong>`;
       finalEl.innerHTML = `Winning number: <strong>${final.winningNumber}</strong><br>${detail}`;
     }
@@ -1126,7 +1143,7 @@ function renderPayout(i) {
       finalWinnerEl.innerHTML = final.winners.length
         ? `<div class="big-winner">${final.winners.map(escapeHtml).join(', ')}</div>
            Winning number: <strong>${final.winningNumber}</strong><br>
-           Final payout: <strong>$${final.payoutEach.toFixed(2)}${final.winners.length > 1 ? ' each' : ''}</strong>`
+           Final payout: <strong>$${correctPeriodPayout(i, final).toFixed(2)}${final.winners.length > 1 ? ' each' : ''}</strong>`
         : `No final winner for number <strong>${final.winningNumber}</strong>.<br><strong>No payout.</strong>`;
     }
     const fv = document.getElementById(`final-away-${i}`);
@@ -1326,15 +1343,21 @@ function clearAllPicks() {
 }
 
 
+
+function correctPeriodPayout(i, result) {
+  if (!result || !Array.isArray(result.winners) || !result.winners.length) return 0;
+  return totalPot(i) / 2;
+}
+
 function getAccruedWinnings() {
   const totals = Object.fromEntries(ALLOWED_PLAYERS.map(name => [name, 0]));
 
-  state.forEach(s => {
+  state.forEach((s, gameIndex) => {
     ['halfResult', 'finalResult'].forEach(key => {
       const result = s && s[key];
       if (!result || !Array.isArray(result.winners) || !result.winners.length) return;
 
-      const payoutEach = Number(result.payoutEach || 0);
+      const payoutEach = correctPeriodPayout(gameIndex, result);
       result.winners.forEach(name => {
         if (Object.prototype.hasOwnProperty.call(totals, name)) {
           totals[name] += payoutEach;

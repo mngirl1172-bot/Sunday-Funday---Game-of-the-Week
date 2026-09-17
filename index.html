@@ -24,9 +24,7 @@
     const pattern=/const games = \[.*?\];/s;
     if(!pattern.test(board)) throw new Error('Could not locate board schedule.');
     board=board.replace(pattern,replacement);
-    document.open();
-    document.write(board);
-    document.close();
+    document.open();document.write(board);document.close();
   }catch(err){
     document.getElementById('status').innerHTML=`<div class="error"><h2>Board could not load</h2><p>${String(err.message||err)}</p><p>Please refresh the page.</p></div>`;
     console.error(err);

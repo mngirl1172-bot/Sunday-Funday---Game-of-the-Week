@@ -15,6 +15,6 @@
   {"week":14,"date":"Sunday, December 13","time":"3:25 PM CT","away":"Kansas City Chiefs","awayAbbr":"KC","home":"Cincinnati Bengals","homeAbbr":"CIN","kickoff":"2026-12-13T15:25:00-06:00","announced":true},
   {"week":15,"date":"Sunday, December 20","time":"TBD","announced":false},
   {"week":16,"date":"Sunday, December 27","time":"TBD","announced":false},
-  {"week":17,"date":"Sunday, January 3, 2027","time":"TBD","announced":false},
+  {"week":17,"date":"Sunday, January 3, 2027","time":"3:25 PM CT","away":"Detroit Lions","awayAbbr":"DET","home":"Chicago Bears","homeAbbr":"CHI","kickoff":"2027-01-03T15:25:00-06:00","announced":true},
   {"week":18,"date":"Sunday, January 10, 2027","time":"TBD","announced":false}
 ]

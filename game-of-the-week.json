@@ -10,7 +10,7 @@
   {"week":9,"date":"Sunday, November 8","time":"3:25 PM CT","away":"Green Bay Packers","awayAbbr":"GB","home":"New England Patriots","homeAbbr":"NE","kickoff":"2026-11-08T15:25:00-06:00","announced":true},
   {"week":10,"date":"Sunday, November 15","time":"3:25 PM CT","away":"San Francisco 49ers","awayAbbr":"SF","home":"Dallas Cowboys","homeAbbr":"DAL","kickoff":"2026-11-15T15:25:00-06:00","announced":true},
   {"week":11,"date":"Sunday, November 22","time":"TBD","announced":false},
-  {"week":12,"date":"Thursday, November 26","time":"3:30 PM CT","away":"Philadelphia Eagles","awayAbbr":"PHI","home":"Dallas Cowboys","homeAbbr":"DAL","kickoff":"2026-11-26T15:30:00-06:00","announced":true},
+  {"week":12,"date":"Sunday, November 29","time":"3:25 PM CT","away":"Seattle Seahawks","awayAbbr":"SEA","home":"San Francisco 49ers","homeAbbr":"SF","kickoff":"2026-11-29T15:25:00-06:00","announced":true},
   {"week":13,"date":"Sunday, December 6","time":"TBD","announced":false},
   {"week":14,"date":"Sunday, December 13","time":"3:25 PM CT","away":"Kansas City Chiefs","awayAbbr":"KC","home":"Cincinnati Bengals","homeAbbr":"CIN","kickoff":"2026-12-13T15:25:00-06:00","announced":true},
   {"week":15,"date":"Sunday, December 20","time":"TBD","announced":false},

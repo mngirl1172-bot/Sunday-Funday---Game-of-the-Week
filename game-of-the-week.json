@@ -1,20 +1,167 @@
 [
-  {"week":1,"date":"Sunday, September 13","time":"3:25 PM CT","away":"Washington Commanders","awayAbbr":"WSH","home":"Philadelphia Eagles","homeAbbr":"PHI","kickoff":"2026-09-13T15:25:00-05:00","announced":true},
-  {"week":2,"date":"Sunday, September 20","time":"3:25 PM CT","away":"Washington Commanders","awayAbbr":"WSH","home":"Dallas Cowboys","homeAbbr":"DAL","kickoff":"2026-09-20T15:25:00-05:00","announced":true},
-  {"week":3,"date":"Sunday, September 27","time":"12:00 PM CT","away":"Los Angeles Chargers","awayAbbr":"LAC","home":"Buffalo Bills","homeAbbr":"BUF","kickoff":"2026-09-27T12:00:00-05:00","announced":true},
-  {"week":4,"date":"Sunday, October 4","time":"12:00 PM CT","away":"Los Angeles Rams","awayAbbr":"LAR","home":"Philadelphia Eagles","homeAbbr":"PHI","kickoff":"2026-10-04T12:00:00-05:00","announced":true},
-  {"week":5,"date":"Sunday, October 11","time":"3:25 PM CT","away":"San Francisco 49ers","awayAbbr":"SF","home":"Seattle Seahawks","homeAbbr":"SEA","kickoff":"2026-10-11T15:25:00-05:00","announced":true},
-  {"week":6,"date":"Sunday, October 18","time":"TBD","announced":false},
-  {"week":7,"date":"Sunday, October 25","time":"3:25 PM CT","away":"Green Bay Packers","awayAbbr":"GB","home":"Detroit Lions","homeAbbr":"DET","kickoff":"2026-10-25T15:25:00-05:00","announced":true},
-  {"week":8,"date":"Sunday, November 1","time":"TBD","announced":false},
-  {"week":9,"date":"Sunday, November 8","time":"3:25 PM CT","away":"Green Bay Packers","awayAbbr":"GB","home":"New England Patriots","homeAbbr":"NE","kickoff":"2026-11-08T15:25:00-06:00","announced":true},
-  {"week":10,"date":"Sunday, November 15","time":"3:25 PM CT","away":"San Francisco 49ers","awayAbbr":"SF","home":"Dallas Cowboys","homeAbbr":"DAL","kickoff":"2026-11-15T15:25:00-06:00","announced":true},
-  {"week":11,"date":"Sunday, November 22","time":"TBD","announced":false},
-  {"week":12,"date":"Sunday, November 29","time":"3:25 PM CT","away":"Seattle Seahawks","awayAbbr":"SEA","home":"San Francisco 49ers","homeAbbr":"SF","kickoff":"2026-11-29T15:25:00-06:00","announced":true},
-  {"week":13,"date":"Sunday, December 6","time":"TBD","announced":false},
-  {"week":14,"date":"Sunday, December 13","time":"3:25 PM CT","away":"Kansas City Chiefs","awayAbbr":"KC","home":"Cincinnati Bengals","homeAbbr":"CIN","kickoff":"2026-12-13T15:25:00-06:00","announced":true},
-  {"week":15,"date":"Sunday, December 20","time":"TBD","announced":false},
-  {"week":16,"date":"Sunday, December 27","time":"TBD","announced":false},
-  {"week":17,"date":"Sunday, January 3, 2027","time":"3:25 PM CT","away":"Detroit Lions","awayAbbr":"DET","home":"Chicago Bears","homeAbbr":"CHI","kickoff":"2027-01-03T15:25:00-06:00","announced":true},
-  {"week":18,"date":"Sunday, January 10, 2027","time":"TBD","announced":false}
+  {
+    "week": 1,
+    "date": "Sunday, September 13",
+    "time": "3:25 PM CT",
+    "away": "Washington Commanders",
+    "awayAbbr": "WSH",
+    "home": "Philadelphia Eagles",
+    "homeAbbr": "PHI",
+    "kickoff": "2026-09-13T15:25:00-05:00",
+    "announced": true
+  },
+  {
+    "week": 2,
+    "date": "Sunday, September 20",
+    "time": "3:25 PM CT",
+    "away": "Washington Commanders",
+    "awayAbbr": "WSH",
+    "home": "Dallas Cowboys",
+    "homeAbbr": "DAL",
+    "kickoff": "2026-09-20T15:25:00-05:00",
+    "announced": true
+  },
+  {
+    "week": 3,
+    "date": "Sunday, September 27",
+    "time": "12:00 PM CT",
+    "away": "Los Angeles Chargers",
+    "awayAbbr": "LAC",
+    "home": "Buffalo Bills",
+    "homeAbbr": "BUF",
+    "kickoff": "2026-09-27T12:00:00-05:00",
+    "announced": true,
+    "source": "https://www.foxsports.com/stories/presspass/fox-nfl-week-3-broadcast-assignments"
+  },
+  {
+    "week": 4,
+    "date": "Sunday, October 4",
+    "time": "12:00 PM CT",
+    "away": "Los Angeles Rams",
+    "awayAbbr": "LAR",
+    "home": "Philadelphia Eagles",
+    "homeAbbr": "PHI",
+    "kickoff": "2026-10-04T12:00:00-05:00",
+    "announced": true,
+    "source": "https://www.foxsports.com/stories/presspass/fox-nfl-week-4-broadcast-assignments"
+  },
+  {
+    "week": 5,
+    "date": "Sunday, October 11",
+    "time": "3:25 PM CT",
+    "away": "San Francisco 49ers",
+    "awayAbbr": "SF",
+    "home": "Seattle Seahawks",
+    "homeAbbr": "SEA",
+    "kickoff": "2026-10-11T15:25:00-05:00",
+    "announced": true
+  },
+  {
+    "week": 6,
+    "date": "Sunday, October 18",
+    "time": "TBD",
+    "announced": false
+  },
+  {
+    "week": 7,
+    "date": "Sunday, October 25",
+    "time": "3:25 PM CT",
+    "away": "Green Bay Packers",
+    "awayAbbr": "GB",
+    "home": "Detroit Lions",
+    "homeAbbr": "DET",
+    "kickoff": "2026-10-25T15:25:00-05:00",
+    "announced": true
+  },
+  {
+    "week": 8,
+    "date": "Sunday, November 1",
+    "time": "TBD",
+    "announced": false
+  },
+  {
+    "week": 9,
+    "date": "Sunday, November 8",
+    "time": "3:25 PM CT",
+    "away": "Green Bay Packers",
+    "awayAbbr": "GB",
+    "home": "New England Patriots",
+    "homeAbbr": "NE",
+    "kickoff": "2026-11-08T15:25:00-06:00",
+    "announced": true
+  },
+  {
+    "week": 10,
+    "date": "Sunday, November 15",
+    "time": "3:25 PM CT",
+    "away": "San Francisco 49ers",
+    "awayAbbr": "SF",
+    "home": "Dallas Cowboys",
+    "homeAbbr": "DAL",
+    "kickoff": "2026-11-15T15:25:00-06:00",
+    "announced": true
+  },
+  {
+    "week": 11,
+    "date": "Sunday, November 22",
+    "time": "TBD",
+    "announced": false
+  },
+  {
+    "week": 12,
+    "date": "Sunday, November 29",
+    "time": "3:25 PM CT",
+    "away": "Seattle Seahawks",
+    "awayAbbr": "SEA",
+    "home": "San Francisco 49ers",
+    "homeAbbr": "SF",
+    "kickoff": "2026-11-29T15:25:00-06:00",
+    "announced": true
+  },
+  {
+    "week": 13,
+    "date": "Sunday, December 6",
+    "time": "TBD",
+    "announced": false
+  },
+  {
+    "week": 14,
+    "date": "Sunday, December 13",
+    "time": "3:25 PM CT",
+    "away": "Kansas City Chiefs",
+    "awayAbbr": "KC",
+    "home": "Cincinnati Bengals",
+    "homeAbbr": "CIN",
+    "kickoff": "2026-12-13T15:25:00-06:00",
+    "announced": true
+  },
+  {
+    "week": 15,
+    "date": "Sunday, December 20",
+    "time": "TBD",
+    "announced": false
+  },
+  {
+    "week": 16,
+    "date": "Sunday, December 27",
+    "time": "TBD",
+    "announced": false
+  },
+  {
+    "week": 17,
+    "date": "Sunday, January 3, 2027",
+    "time": "3:25 PM CT",
+    "away": "Detroit Lions",
+    "awayAbbr": "DET",
+    "home": "Chicago Bears",
+    "homeAbbr": "CHI",
+    "kickoff": "2027-01-03T15:25:00-06:00",
+    "announced": true
+  },
+  {
+    "week": 18,
+    "date": "Sunday, January 10, 2027",
+    "time": "TBD",
+    "announced": false
+  }
 ]

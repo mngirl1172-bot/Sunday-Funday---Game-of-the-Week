@@ -2,7 +2,7 @@
   {"week":1,"date":"Sunday, September 13","time":"3:25 PM CT","away":"Washington Commanders","awayAbbr":"WSH","home":"Philadelphia Eagles","homeAbbr":"PHI","kickoff":"2026-09-13T15:25:00-05:00","announced":true},
   {"week":2,"date":"Sunday, September 20","time":"3:25 PM CT","away":"Washington Commanders","awayAbbr":"WSH","home":"Dallas Cowboys","homeAbbr":"DAL","kickoff":"2026-09-20T15:25:00-05:00","announced":true},
   {"week":3,"date":"Sunday, September 27","time":"12:00 PM CT","away":"Los Angeles Chargers","awayAbbr":"LAC","home":"Buffalo Bills","homeAbbr":"BUF","kickoff":"2026-09-27T12:00:00-05:00","announced":true},
-  {"week":4,"date":"Sunday, October 4","time":"TBD","announced":false},
+  {"week":4,"date":"Sunday, October 4","time":"12:00 PM CT","away":"Los Angeles Rams","awayAbbr":"LAR","home":"Philadelphia Eagles","homeAbbr":"PHI","kickoff":"2026-10-04T12:00:00-05:00","announced":true},
   {"week":5,"date":"Sunday, October 11","time":"3:25 PM CT","away":"San Francisco 49ers","awayAbbr":"SF","home":"Seattle Seahawks","homeAbbr":"SEA","kickoff":"2026-10-11T15:25:00-05:00","announced":true},
   {"week":6,"date":"Sunday, October 18","time":"TBD","announced":false},
   {"week":7,"date":"Sunday, October 25","time":"3:25 PM CT","away":"Green Bay Packers","awayAbbr":"GB","home":"Detroit Lions","homeAbbr":"DET","kickoff":"2026-10-25T15:25:00-05:00","announced":true},

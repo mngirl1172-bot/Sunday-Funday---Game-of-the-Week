@@ -29,7 +29,9 @@ jobs:
           python-version: '3.12'
       - name: Install announcement image reader
         run: sudo apt-get update && sudo apt-get install -y tesseract-ocr
-      - name: Verify all 18 weeks
+      - name: Test matchup updater
+        run: python -m unittest -v test_update_matchups.py
+      - name: Verify upcoming weeks and preserve historical boards
         id: verify
         continue-on-error: true
         run: python -u update_matchups.py

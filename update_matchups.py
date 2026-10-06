@@ -96,7 +96,27 @@ def main():
     games = json.loads(path.read_text())
     if len(games) != 18 or [g['week'] for g in games] != list(range(1, 19)):
         raise ValueError('Expected the 18 regular season boards')
-    checked, errors = [], []
+    now = datetime.now(timezone.utc)
+    checked, locked, awaiting, errors = [], [], [], []
+    active = []
+    for game in games:
+        # Saved games are historical once kickoff has passed. FOX removes old
+        # assignments, so never fetch or rewrite these boards on later runs.
+        if game.get('kickoff'):
+            kickoff = datetime.fromisoformat(game['kickoff'].replace('Z', '+00:00'))
+        else:
+            # Unannounced boards have only a date. Retire them after that day.
+            date = game['date']
+            if date.count(',') == 1:
+                date += f', {SEASON}'
+            kickoff = datetime.strptime(date, '%A, %B %d, %Y').replace(hour=23, minute=59, second=59, tzinfo=CT)
+        if kickoff.tzinfo is None:
+            raise ValueError(f"Week {game['week']}: kickoff must include a timezone")
+        if kickoff <= now:
+            locked.append(game['week'])
+            print(f"Week {game['week']}: preserving historical board")
+        else:
+            active.append(game)
     def prepare(week):
         try:
             events = scoreboard(week)
@@ -104,8 +124,8 @@ def main():
         except Exception as exc:
             return None, None, exc
     with ThreadPoolExecutor(max_workers=4) as pool:
-        prepared = list(pool.map(prepare, range(1, 19)))
-    for game, (events, announcement, error) in zip(games, prepared):
+        prepared = list(pool.map(prepare, [g['week'] for g in active]))
+    for game, (events, announcement, error) in zip(active, prepared):
         week = game['week']
         try:
             if error:
@@ -117,18 +137,23 @@ def main():
             elif game.get('announced'):
                 # Keep the chosen matchup, but follow official flexed kickoff times.
                 candidates = [e for e in events if all(t['abbreviation'] == game.get(key) for t, key in zip(team_pair(e), ('awayAbbr', 'homeAbbr'))) and is_fox(e)]
-                if len(candidates) != 1:
-                    raise ValueError('Existing matchup is absent from the FOX schedule')
-                apply_event(game, candidates[0])
-                checked.append(week)
-                print(f'Week {week}: verified existing matchup and kickoff')
+                if len(candidates) > 1:
+                    raise ValueError('Existing matchup is ambiguous in the FOX schedule')
+                if candidates:
+                    apply_event(game, candidates[0])
+                    checked.append(week)
+                    print(f'Week {week}: verified existing matchup and kickoff')
+                else:
+                    awaiting.append(week)
+                    print(f'Week {week}: awaiting schedule confirmation; preserving saved matchup')
             else:
+                awaiting.append(week)
                 print(f'Week {week}: awaiting a verified FOX announcement')
         except Exception as exc:
             errors.append({'week': week, 'error': str(exc)})
             print(f'Week {week}: {exc}')
     path.write_text(json.dumps(games, indent=2) + '\n')
-    (ROOT / 'matchup-update-status.json').write_text(json.dumps({'checkedAt': datetime.now(timezone.utc).isoformat(), 'verifiedWeeks': checked, 'errors': errors}, indent=2) + '\n')
+    (ROOT / 'matchup-update-status.json').write_text(json.dumps({'checkedAt': now.isoformat(), 'verifiedWeeks': checked, 'lockedWeeks': locked, 'awaitingWeeks': awaiting, 'errors': errors}, indent=2) + '\n')
     if errors:
         raise SystemExit('Some weeks could not be verified; see matchup-update-status.json')
 

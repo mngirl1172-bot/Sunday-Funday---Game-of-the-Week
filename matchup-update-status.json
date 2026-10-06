@@ -1,17 +1,50 @@
 {
-  "checkedAt": "2026-10-05T14:39:42.912551+00:00",
-  "verifiedWeeks": [
-    1,
-    2,
-    3,
-    4,
-    5,
-    7,
-    9,
-    10,
-    12,
-    14,
-    17
-  ],
-  "errors": []
+  "checkedAt": "2026-10-06T00:03:07.613172+00:00",
+  "verifiedWeeks": [],
+  "errors": [
+    {
+      "week": 1,
+      "error": "Existing matchup is absent from the FOX schedule"
+    },
+    {
+      "week": 2,
+      "error": "Existing matchup is absent from the FOX schedule"
+    },
+    {
+      "week": 3,
+      "error": "Existing matchup is absent from the FOX schedule"
+    },
+    {
+      "week": 4,
+      "error": "Existing matchup is absent from the FOX schedule"
+    },
+    {
+      "week": 5,
+      "error": "Existing matchup is absent from the FOX schedule"
+    },
+    {
+      "week": 7,
+      "error": "Existing matchup is absent from the FOX schedule"
+    },
+    {
+      "week": 9,
+      "error": "Existing matchup is absent from the FOX schedule"
+    },
+    {
+      "week": 10,
+      "error": "Existing matchup is absent from the FOX schedule"
+    },
+    {
+      "week": 12,
+      "error": "Existing matchup is absent from the FOX schedule"
+    },
+    {
+      "week": 14,
+      "error": "Existing matchup is absent from the FOX schedule"
+    },
+    {
+      "week": 17,
+      "error": "Existing matchup is absent from the FOX schedule"
+    }
+  ]
 }

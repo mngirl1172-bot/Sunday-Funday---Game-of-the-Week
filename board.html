@@ -1020,7 +1020,9 @@ function syncRelevantScores() {
     if (!g.kickoff) return;
     const kickoff = new Date(g.kickoff).getTime();
     const now = Date.now();
-    if (now >= kickoff - 30 * 60 * 1000 && now <= kickoff + 6 * 60 * 60 * 1000) {
+    // Continue recovering missing results for completed games after the live window.
+    // Otherwise a missed score sync permanently omits a winner from season totals.
+    if (now >= kickoff - 30 * 60 * 1000) {
       if (!state[i].halfResult || !state[i].finalResult) syncGameScore(i);
     }
   });

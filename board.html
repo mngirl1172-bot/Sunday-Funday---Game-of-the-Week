@@ -592,6 +592,21 @@ async function loadSharedPicks() {
     });
   }
 
+  // Recalculate saved winners after authoritative shared picks are loaded.
+  // Previous results may have been calculated before Bob's pick was available.
+  state.forEach((gameState, i) => {
+    ['halfResult', 'finalResult'].forEach(key => {
+      const result = gameState[key];
+      if (!result || !Number.isFinite(Number(result.awayScore)) || !Number.isFinite(Number(result.homeScore))) return;
+      const digit = winningNumberFromScores(result.awayScore, result.homeScore);
+      const winner = matchingPlayers(i, digit)[0];
+      result.winningNumber = digit;
+      result.winners = winner ? [winner.name] : [];
+      result.payoutEach = winner ? totalPot(i) / 2 : 0;
+      result.pot = totalPot(i) / 2;
+      result.totalPot = totalPot(i);
+    });
+  });
   saveState();
   games.forEach((_, i) => renderBoard(i));
 }

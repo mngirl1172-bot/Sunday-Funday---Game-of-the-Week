@@ -59,8 +59,14 @@
   {
     "week": 6,
     "date": "Sunday, October 18",
-    "time": "TBD",
-    "announced": false
+    "time": "3:05 PM CT",
+    "away": "Arizona Cardinals",
+    "awayAbbr": "ARI",
+    "home": "Los Angeles Rams",
+    "homeAbbr": "LAR",
+    "kickoff": "2026-10-18T15:05:00-05:00",
+    "announced": true,
+    "source": "https://www.foxsports.com/stories/nfl/nfl-week-6-schedule-how-watch-tv-channels-streaming-game-previews"
   },
   {
     "week": 7,

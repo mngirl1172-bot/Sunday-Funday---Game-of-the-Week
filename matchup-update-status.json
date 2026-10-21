@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-21T04:44:49.807456+00:00",
+  "checkedAt": "2026-10-21T11:47:41.173444+00:00",
   "verifiedWeeks": [],
   "lockedWeeks": [
     1,
@@ -17,11 +17,24 @@
     11,
     12,
     13,
-    14,
-    15,
-    16,
-    17,
-    18
+    14
   ],
-  "errors": []
+  "errors": [
+    {
+      "week": 15,
+      "error": "HTTP Error 406: Not Acceptable"
+    },
+    {
+      "week": 16,
+      "error": "HTTP Error 406: Not Acceptable"
+    },
+    {
+      "week": 17,
+      "error": "HTTP Error 406: Not Acceptable"
+    },
+    {
+      "week": 18,
+      "error": "HTTP Error 406: Not Acceptable"
+    }
+  ]
 }

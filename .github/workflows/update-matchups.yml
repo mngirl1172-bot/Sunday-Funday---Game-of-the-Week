@@ -33,7 +33,6 @@ jobs:
         run: python -m unittest -v test_update_matchups.py
       - name: Verify upcoming weeks and preserve historical boards
         id: verify
-        continue-on-error: true
         run: python -u update_matchups.py
       - name: Save verified schedule and check status
         run: |
@@ -54,8 +53,3 @@ jobs:
       - name: Publish board
         id: deployment
         uses: actions/deploy-pages@v4
-      - name: Report any verification failures
-        if: steps.verify.outcome == 'failure'
-        run: |
-          cat matchup-update-status.json
-          exit 1

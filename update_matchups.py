@@ -81,9 +81,6 @@ def featured(week, events):
 def featured_fallback(week, events):
     """Use the published weekly announcing schedule when FOX's graphic is unavailable."""
     now = datetime.now(CT)
-    # The fallback page covers the current week's assignments only.
-    if not any(datetime.fromisoformat(e['date'].replace('Z', '+00:00')).astimezone(CT).date() >= now.date() for e in events):
-        return None
     url = f'https://awfulannouncing.com/nfl/week-{week}-announcing-schedule-{SEASON}.html'
     try:
         html = fetch(url).decode('utf-8', errors='replace')
@@ -94,7 +91,7 @@ def featured_fallback(week, events):
     from html import unescape
     plain = unescape(re.sub(r'<[^>]+>', ' ', re.sub(r'<(script|style)\b[^>]*>.*?</\1>', ' ', html, flags=re.I | re.S)))
     plain = re.sub(r'\s+', ' ', plain)
-    if 'Kevin Burkhardt' not in plain or 'Tom Brady' not in plain:
+    if not re.search(r'Kevin\s+Burkhardt', plain, re.I) or not re.search(r'Tom\s+Brady', plain, re.I):
         return None
     matches = []
     for event in events:
@@ -103,9 +100,9 @@ def featured_fallback(week, events):
         away, home = team_pair(event)
         # Verify both team names and the lead FOX announcers in the same listing.
         nicknames = [t['name'].split()[-1] for t in (away, home)]
-        for match in re.finditer(r'Kevin Burkhardt', plain, flags=re.I):
-            snippet = plain[max(0, match.start()-220):match.end()+90]
-            if 'Tom Brady' in snippet and all(re.search(r'\b'+re.escape(n)+r'\b', snippet, re.I) for n in nicknames):
+        for match in re.finditer(r'Kevin\s+Burkhardt', plain, flags=re.I):
+            snippet = plain[max(0, match.start()-450):match.end()+450]
+            if re.search(r'Tom\s+Brady', snippet, re.I) and all(re.search(r'\b'+re.escape(n)+r'\b', snippet, re.I) for n in nicknames):
                 matches.append(event)
                 break
     if len(matches) > 1:

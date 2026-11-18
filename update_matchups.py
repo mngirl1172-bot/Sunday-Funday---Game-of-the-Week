@@ -81,6 +81,33 @@ def featured(week, events):
 def featured_fallback(week, events):
     """Use the published weekly announcing schedule when FOX's graphic is unavailable."""
     now = datetime.now(CT)
+    # Backup source: season-long FOX broadcast crew assignments. The Week N
+    # section is isolated to prevent matching another week's featured game.
+    blog_url = 'https://tamirmoore.blogspot.com/2026/05/2026-nfl-on-fox-schedule.html'
+    try:
+        from html import unescape
+        blog = unescape(fetch(blog_url).decode('utf-8', errors='replace'))
+        blog = re.sub(r'<(script|style)\\b[^>]*>.*?</\\1>', ' ', blog, flags=re.I | re.S)
+        blog = re.sub(r'<[^>]+>', ' ', blog)
+        blog = re.sub(r'\\s+', ' ', blog)
+        headings = list(re.finditer(r'Week\\s+(\\d{1,2})\\s*[—–-]', blog, re.I))
+        for i, heading in enumerate(headings):
+            if int(heading.group(1)) != week:
+                continue
+            section = blog[heading.end():headings[i + 1].start() if i + 1 < len(headings) else heading.end() + 1800]
+            for event in events:
+                if not is_fox(event):
+                    continue
+                away, home = team_pair(event)
+                nicknames = [t['name'].split()[-1] for t in (away, home)]
+                for crew in re.finditer(r'Kevin\\s+Burkhardt\\s*[,(/]\\s*Tom\\s+Brady', section, re.I):
+                    context = section[max(0, crew.start() - 130):crew.start()]
+                    if all(re.search(r'\\b' + re.escape(n) + r'\\b', context, re.I) for n in nicknames):
+                        return event, blog_url
+    except HTTPError as exc:
+        if exc.code != 404:
+            raise
+    
     url = f'https://awfulannouncing.com/nfl/week-{week}-announcing-schedule-{SEASON}.html'
     try:
         html = fetch(url).decode('utf-8', errors='replace')

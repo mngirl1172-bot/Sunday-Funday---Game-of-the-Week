@@ -92,8 +92,8 @@ def featured_fallback(week, events):
             return None
         raise
     from html import unescape
-    plain = unescape(re.sub(r'<[^>]+>', ' ', re.sub(r'<(script|style)\\b[^>]*>.*?</\\1>', ' ', html, flags=re.I | re.S)))
-    plain = re.sub(r'\\s+', ' ', plain)
+    plain = unescape(re.sub(r'<[^>]+>', ' ', re.sub(r'<(script|style)\b[^>]*>.*?</\1>', ' ', html, flags=re.I | re.S)))
+    plain = re.sub(r'\s+', ' ', plain)
     if 'Kevin Burkhardt' not in plain or 'Tom Brady' not in plain:
         return None
     matches = []
@@ -105,7 +105,7 @@ def featured_fallback(week, events):
         nicknames = [t['name'].split()[-1] for t in (away, home)]
         for match in re.finditer(r'Kevin Burkhardt', plain, flags=re.I):
             snippet = plain[max(0, match.start()-220):match.end()+90]
-            if 'Tom Brady' in snippet and all(re.search(r'\\b'+re.escape(n)+r'\\b', snippet, re.I) for n in nicknames):
+            if 'Tom Brady' in snippet and all(re.search(r'\b'+re.escape(n)+r'\b', snippet, re.I) for n in nicknames):
                 matches.append(event)
                 break
     if len(matches) > 1:
